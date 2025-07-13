@@ -37,14 +37,14 @@ passport.use(
         //   Admin.findOne({ email_id: email })
         // ]);
 
-        const student = {
+        const faculty = {
             email : email,
             pic : pic,
             firstName : firstName,
             lastName : lastName
         }
         const admin = null
-        const faculty = null
+        const student = null
 
         if (!student && !faculty && !admin) {
           const error = new Error('User not registered in system');

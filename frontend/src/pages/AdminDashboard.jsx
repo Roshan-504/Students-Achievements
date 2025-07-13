@@ -3,6 +3,7 @@ import '../App.css';
 import Overview from '../components/Overview';
 import Users from '../components/Users';
 import Settings from '../components/Settings';
+import axiosInstance from '../services/axiosInstance';
 
 const AdminDashboard = () => {
   // State for dashboard data and UI controls
@@ -10,17 +11,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
   const [showLogoutTooltip, setShowLogoutTooltip] = useState(false);
+  const [contactMessages, setContactMessages] = useState([]);
 
-
-  // Admin user data
-  const [admin, setAdmin] = useState({
-    name: 'Admin User',
-    email: 'admin@university.edu',
-    role: 'System Administrator',
-    avatar: null
-  });
-
-  // Mock admin dashboard data
   const [dashboardData, setDashboardData] = useState({
     stats: {
       totalStudents: 1247,
@@ -48,127 +40,7 @@ const AdminDashboard = () => {
       { id: 4, name: '2024_a_INFT(D15A)', instructor: 'Prof. Williams', students: 29, status: 'draft', responses: 0 }
     ],
     // New data for System Management
-    studentReports: [
-      {
-  id: 1,
-  studentName: 'John Doe',
-  studentEmail: 'john.doe@university.edu',
-  subject: 'Achievement Proof Upload Failure',
-  message: 'I am trying to upload a PDF proof of my internship, but it fails with an unknown error.',
-  priority: 'high',
-  status: 'pending',
-  submittedAt: '2024-06-20 14:30',
-  category: 'file-upload'
-},
 
-{
-  id: 2,
-  studentName: 'Sarah Johnson',
-  studentEmail: 'sarah.j@university.edu',
-  subject: 'Workshop Details Not Saving',
-  message: 'After entering workshop details and clicking save, the form resets and nothing is stored.',
-  priority: 'medium',
-  status: 'resolved',
-  submittedAt: '2024-06-19 09:15',
-  category: 'form-entry'
-},
-
-{
-  id: 3,
-  studentName: 'Emma Wilson',
-  studentEmail: 'emma.w@university.edu',
-  subject: 'Incorrect Achievement Displayed',
-  message: 'My profile is showing an outdated internship from last year that I already removed.',
-  priority: 'low',
-  status: 'in responses',
-  submittedAt: '2024-06-18 16:45',
-  category: 'profile-update'
-},
-
-{
-  id: 4,
-  studentName: 'Ravi Sharma',
-  studentEmail: 'ravi.s@university.edu',
-  subject: 'Unable to Edit Technical Activity',
-  message: 'I am trying to update the certificate number in my technical activity, but the edit button is disabled.',
-  priority: 'medium',
-  status: 'pending',
-  submittedAt: '2024-06-20 11:20',
-  category: 'activity-edit'
-},
-
-{
-  id: 5,
-  studentName: 'Anjali Mehta',
-  studentEmail: 'anjali.m@university.edu',
-  subject: 'PDF Proof Not Displaying',
-  message: 'The proof I uploaded is not visible when I try to preview it from my dashboard.',
-  priority: 'medium',
-  status: 'pending',
-  submittedAt: '2024-06-19 10:05',
-  category: 'file-preview'
-},
-
-{
-  id: 6,
-  studentName: 'Nikhil Patel',
-  studentEmail: 'nikhil.p@university.edu',
-  subject: 'Notice Not Received',
-  message: 'I did not receive the alert for the final deadline to submit my achievements.',
-  priority: 'low',
-  status: 'resolved',
-  submittedAt: '2024-06-18 08:55',
-  category: 'notifications'
-},
-
-{
-  id: 7,
-  studentName: 'Priya Desai',
-  studentEmail: 'priya.d@university.edu',
-  subject: 'Multiple File Upload Issue',
-  message: 'When I upload both image and PDF proofs together, only one gets saved.',
-  priority: 'high',
-  status: 'pending',
-  submittedAt: '2024-06-21 13:10',
-  category: 'file-upload'
-},
-
-{
-  id: 8,
-  studentName: 'Amit Verma',
-  studentEmail: 'amit.v@university.edu',
-  subject: 'Startup Data Not Saving',
-  message: 'I added details of my startup project, but the form crashes on submission.',
-  priority: 'medium',
-  status: 'in responses',
-  submittedAt: '2024-06-20 15:40',
-  category: 'startup'
-},
-
-{
-  id: 9,
-  studentName: 'Sneha Kapoor',
-  studentEmail: 'sneha.k@university.edu',
-  subject: 'Page Freezes on Submission',
-  message: 'The page freezes when I try to update my non-technical activities.',
-  priority: 'medium',
-  status: 'pending',
-  submittedAt: '2024-06-21 10:25',
-  category: 'non-technical'
-},
-
-{
-  id: 10,
-  studentName: 'Kunal Shah',
-  studentEmail: 'kunal.s@university.edu',
-  subject: 'Profile Access Error',
-  message: 'I get a “403 Forbidden” error when trying to view my own profile details.',
-  priority: 'high',
-  status: 'pending',
-  submittedAt: '2024-06-22 09:45',
-  category: 'authentication'
-}
-    ],
 notices: [
   {
     id: 1,
@@ -199,6 +71,29 @@ notices: [
   }
 ]
   });
+  // Fetch contact messages when settings tab is active
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (activeTab === 'settings') {
+        try {
+          const response = await axiosInstance.get('/contact-us/messages');
+          setContactMessages(response.data.data);
+        } catch (error) {
+          console.error('Failed to fetch contact messages:', error);
+        }
+      }
+    };
+    
+    fetchMessages();
+  }, [activeTab]);
+  // Admin user data
+  const [admin, setAdmin] = useState({
+    name: 'Admin User',
+    email: 'admin@university.edu',
+    role: 'System Administrator',
+    avatar: null
+  });
+  
 
 
   // Animation trigger
@@ -218,64 +113,15 @@ notices: [
     setActiveTab(tab);
   };
 
-  // User management functions
-  const handleUserAction = (user, action) => {
-    console.log(`${action} user:`, user);
-    // Will integrate with backend API
-  };
-
-  // Get status badge styling
-  const getStatusBadge = (status) => {
-    const styles = {
-      active: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-      pending: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
-      inactive: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300',
-      draft: 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300',
-      resolved: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-      'in-responses': 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300'
-    };
-    return `px-3 py-1 text-xs font-semibold rounded-full border shadow-sm ${styles[status] || styles.active}`;
-  };
-
-
-  // Get notice type styling
-  const getNoticeTypeStyles = (type) => {
-    const styles = {
-      warning: 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white',
-      success: 'bg-gradient-to-r from-green-400 to-emerald-400 text-white',
-      info: 'bg-gradient-to-r from-blue-400 to-indigo-400 text-white',
-      danger: 'bg-gradient-to-r from-red-400 to-pink-400 text-white'
-    };
-    return styles[type] || styles.info;
-  };
-
-  // Filter users based on search
-  const filteredUsers = dashboardData.users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-// Helper function to get category icon - shows different icons for different report categories
-  const getCategoryIcon = (category) => {
-    const icons = {
-      technical: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      academic: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
-      financial: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-        </svg>
-      )
-    };
-    return icons[category] || icons.technical;
+  const updateMessageStatus = async (id, status) => {
+    try {
+      await axiosInstance.patch(`/contact-us/message/${id}`, { status });
+      setContactMessages(prev => prev.map(msg => 
+        msg._id === id ? { ...msg, status } : msg
+      ));
+    } catch (error) {
+      console.error('Failed to update message status:', error);
+    }
   };
 
   return (
@@ -374,7 +220,10 @@ notices: [
           )}
 
           {activeTab === 'settings' && (
-            <Settings/>
+            <Settings 
+              contactMessages={contactMessages} 
+              updateMessageStatus={updateMessageStatus} 
+            />
           )}
         </div>
       </main>

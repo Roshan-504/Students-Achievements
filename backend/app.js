@@ -20,6 +20,7 @@ import './config/passport.js'; // Load Passport config BEFORE routes
 import {connectDB} from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import filterRoutes from './routes/filterRoutes.js'
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/student',workshopRoutes);
 app.use('/student',volunteeringRoutes);
 app.use('/student',EntrepreneurshipRoutes);
 app.use('/student',OtherAchievementsRoutes);
+app.use('/api/faculty',filterRoutes);
 
 // Server
 const PORT = process.env.PORT || 3000;

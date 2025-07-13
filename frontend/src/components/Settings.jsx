@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  AlertCircle, 
+  Bug, 
+  HelpCircle, 
+  MessageSquare, 
+  Star, 
+  Clock,
+  CheckCircle,
+  AlertTriangle,
+  ChevronRight,
+  Mail,
+  User,
+  Calendar
+} from 'lucide-react';
 import '../App.css';
 
-const Settings = () => {
+const Settings = ({ contactMessages, updateMessageStatus }) => {
     
     useEffect(() => {
         const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -41,7 +55,7 @@ const Settings = () => {
               { id: 3, name: '2023_c_INFT(D10C)', instructor: 'Dr. Johnson', students: 52, status: 'active', responses: 45 },
               { id: 4, name: '2024_a_INFT(D15A)', instructor: 'Prof. Williams', students: 29, status: 'draft', responses: 0 }
             ],
-            // New data for System Management
+            // Contact us form filled by student that data will be displayed here
             studentReports: [
                 {
             id: 1,
@@ -204,16 +218,48 @@ const Settings = () => {
           });
         
       // Get status badge styling
-      const getStatusBadge = (status) => {
-        const styles = {
-          active: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-          pending: 'bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border-yellow-300',
-          inactive: 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-gray-300',
-          draft: 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-blue-300',
-          resolved: 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-green-300',
-          'in-responses': 'bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 border-orange-300'
-        };
-        return `px-3 py-1 text-xs font-semibold rounded-full border shadow-sm ${styles[status] || styles.active}`;
+      const getCategoryColor = (type) => {
+  switch (type) {
+    case 'bug':
+      return 'bg-red-100 text-red-600 border-red-200';
+    case 'feature':
+      return 'bg-purple-100 text-purple-600 border-purple-200';
+    case 'inquiry':
+      return 'bg-blue-100 text-blue-600 border-blue-200';
+    case 'feedback':
+      return 'bg-green-100 text-green-600 border-green-200';
+    default:
+      return 'bg-gray-100 text-gray-600 border-gray-200';
+  }
+      };
+
+      const getStatusConfig = (status) => {
+        switch (status) {
+          case 'new':
+            return {
+              color: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+              icon: <Clock size={12} />,
+              label: 'New'
+            };
+          case 'in-progress':
+            return {
+              color: 'bg-blue-100 text-blue-800 border-blue-300',
+              icon: <AlertTriangle size={12} />,
+              label: 'In Progress'
+            };
+          case 'resolved':
+            return {
+              color: 'bg-green-100 text-green-800 border-green-300',
+              icon: <CheckCircle size={12} />,
+              label: 'Resolved'
+            };
+          default:
+            return {
+              color: 'bg-gray-100 text-gray-800 border-gray-300',
+              icon: <AlertCircle size={12} />,
+              label: 'Unknown'
+            };
+        }
       };
     
     
@@ -236,26 +282,27 @@ const Settings = () => {
       );
     
     // Helper function to get category icon - shows different icons for different report categories
-      const getCategoryIcon = (category) => {
-        const icons = {
-          technical: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-          ),
-          academic: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          ),
-          financial: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-            </svg>
-          )
+        const getCategoryIcon = (type) => {
+          const icons = {
+            suggestion: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+            ),
+            report: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            ),
+            contact: (
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            )
+          };
+          return icons[type] || icons.contact;
         };
-        return icons[category] || icons.technical;
-      };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -266,77 +313,76 @@ const Settings = () => {
         </div>
       </div>
 
-      {/* Student Reports Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900 flex items-center">
-            <svg className="w-6 h-6 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Student Reports
-          </h3>
-          <span className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-            {dashboardData.studentReports.length} Reports
-          </span>
-        </div>
-
-        {/* Reports Horizontal Scroll Container */}
-        <div className="overflow-x-auto pb-2">
-          <div className="flex space-x-6 min-w-max">
-            {dashboardData.studentReports.map((report) => (
-              <div key={report.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-300 flex-shrink-0 w-80">
-                {/* Report Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className={`p-2 rounded-lg ${
-                      report.category === 'technical' ? 'bg-blue-100 text-blue-600' :
-                      report.category === 'academic' ? 'bg-green-100 text-green-600' :
-                      'bg-yellow-100 text-yellow-600'
-                    }`}>
-                      {getCategoryIcon(report.category)}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900 text-sm">{report.subject}</h4>
-                      <p className="text-xs text-gray-500">{report.submittedAt}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
-                    report.priority === 'high' ? 'bg-red-100 text-red-800 border-red-200' :
-                    report.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                    'bg-green-100 text-green-800 border-green-200'
-                  }`}>
-                    {report.priority.toUpperCase()}
-                  </span>
+      {/* Student Reports Section Contact Us form data should be displayed here */}
+        <div className="flex space-x-6 overflow-x-auto pb-4 px-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          {contactMessages.map((message) => (
+          <div key={message._id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-500 flex-shrink-0 w-96 transform hover:-translate-y-1">
+            {/* Report Header */}
+            <div className="flex items-start justify-between mb-5">
+              <div className="flex items-center space-x-4">
+                <div className={`p-3 rounded-xl border ${getCategoryColor(message.type)} shadow-sm`}>
+                  {getCategoryIcon(message.type)}
                 </div>
-
-                {/* Student Info */}
-                <div className="mb-3">
-                  <p className="text-sm font-medium text-gray-900">{report.studentName}</p>
-                  <p className="text-xs text-gray-500">{report.studentEmail}</p>
-                </div>
-
-                {/* Report Message */}
-                <p className="text-sm text-gray-700 mb-4 line-clamp-3">{report.message}</p>
-
-                {/* Status and Actions */}
-                <div className="flex items-center justify-between">
-                  <span className={getStatusBadge(report.status)}>
-                    {report.status.replace('-', ' ')}
-                  </span>
-                  <div className="flex space-x-2">
-                    <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium transition-colors">
-                      View
-                    </button>
-                    <button className="text-green-600 hover:text-green-800 text-sm font-medium transition-colors">
-                      Resolve
-                    </button>
+                <div className="flex-1">
+                  <h4 className="font-bold text-gray-900 text-base mb-1 leading-tight">{message.subject}</h4>
+                  <div className="flex items-center space-x-2 text-xs text-gray-500">
+                    <Calendar size={12} />
+                    <span>{new Date(message.createdAt).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
-            ))}
+              <ChevronRight className="text-gray-400 hover:text-blue-600 transition-colors cursor-pointer" size={20} />
+            </div>
+
+            {/* Student Info */}
+            <div className="mb-5 p-4 bg-gray-50 rounded-xl border border-gray-100">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <User className="text-blue-600" size={16} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{message.name}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-gray-100 rounded-lg">
+                  <Mail className="text-gray-600" size={16} />
+                </div>
+                <p className="text-sm text-gray-600">{message.email}</p>
+              </div>
+            </div>
+
+            {/* Report Message */}
+            <div className="mb-6">
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">{message.message}</p>
+              </div>
+            </div>
+
+            {/* Status and Actions */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</span>
+                <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-semibold ${getStatusConfig(message.status).color}`}>
+                  {getStatusConfig(message.status).icon}
+                  <span>{getStatusConfig(message.status).label}</span>
+                </div>
+              </div>
+              
+              <select
+                value={message.status}
+                onChange={(e) => updateMessageStatus(message._id, e.target.value)}
+                className="px-3 py-2 text-xs font-medium border-2 rounded-lg bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                <option value="new">New</option>
+                <option value="in-progress">In Progress</option>
+                <option value="resolved">Resolved</option>
+              </select>
+            </div>
           </div>
+        ))}
         </div>
-      </div>
+        
 
       {/* Notices Section */}
       <div className="space-y-6">
