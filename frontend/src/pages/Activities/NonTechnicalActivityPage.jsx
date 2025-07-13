@@ -219,24 +219,32 @@ const NonTechnicalActivityPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {activities.map((activity) => (
                   <tr key={activity._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
+                    <td className="px-6 py-4 max-w-[300px]"> {/* Added max-width */}
+                      <div className="flex items-center min-w-0"> {/* Added min-w-0 */}
+                        <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
                           {activity.activity_name.charAt(0)}
                         </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">{activity.activity_name}</div>
+                        <div className="min-w-0 overflow-hidden"> {/* Added overflow-hidden */}
+                          <div className="text-sm font-semibold text-gray-900 truncate">
+                            {activity.activity_name}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{activity.type}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{activity.institute}</div>
-                      {activity.organizer && (
-                        <div className="text-xs text-gray-500">by {activity.organizer}</div>
-                      )}
+                    <td className="px-6 py-4 max-w-[250px]"> {/* Added max-width */}
+                      <div className="min-w-0 overflow-hidden"> {/* Added container */}
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {activity.institute}
+                        </div>
+                        {activity.organizer && (
+                          <div className="text-xs text-gray-500 truncate"> {/* Added truncate */}
+                            by {activity.organizer}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex items-center">
@@ -528,6 +536,7 @@ const NonTechnicalActivityPage = () => {
                     no_certificate_yet: false
                   }}
                   onSubmit={handleFormSubmit}
+                  loading={loading}
                 />
               </div>
             </div>

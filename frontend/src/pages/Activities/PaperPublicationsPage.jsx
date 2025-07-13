@@ -218,13 +218,15 @@ const PaperPublicationsPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {publications.map((pub) => (
                   <tr key={pub._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
+                    <td className="px-6 py-4 max-w-[300px]"> {/* Added max-width */}
+                      <div className="flex items-center min-w-0"> {/* Added min-w-0 */}
+                        <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
                           {pub.paper_title.charAt(0)}
                         </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">{pub.paper_title}</div>
+                        <div className="min-w-0 overflow-hidden"> {/* Added overflow-hidden */}
+                          <div className="text-sm font-semibold text-gray-900 truncate">
+                            {pub.paper_title}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -540,6 +542,7 @@ const PaperPublicationsPage = () => {
                     no_certificate_yet: false
                   }}
                   onSubmit={handleFormSubmit}
+                  loading={loading}
                 />
               </div>
             </div>

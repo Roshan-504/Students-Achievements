@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileText, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
 
-const PaperPublicationForm = ({ initialData, onSubmit }) => {
+const PaperPublicationForm = ({ initialData, onSubmit, loading }) => {
   const [formData, setFormData] = useState(
     initialData || {
       paper_title: '',
@@ -250,11 +250,7 @@ const PaperPublicationForm = ({ initialData, onSubmit }) => {
             type="submit"
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
-              !formData.paper_title ||
-              !formData.publication_name ||
-              !formData.issn_isbn ||
-              !formData.date_of_publication ||
-              !formData.category
+              loading || (!formData.proof && !formData.no_certificate_yet)
             }
             aria-label={initialData?._id ? 'Update Paper Publication' : 'Add Paper Publication'}
           >

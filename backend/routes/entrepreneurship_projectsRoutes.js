@@ -1,24 +1,21 @@
 import express from 'express';
 import { 
-    getEntrepreneurshipProjects, 
-    uploadEntrepreneurshipProject, 
-    updateEntrepreneurshipProject, 
-    deleteEntrepreneurshipProject 
-} from '../controllers/entrepreneurship_projectsController.js'; 
-import { authenticate, authorizeRoles } from '../middlewares/auth.js'; 
+  getEntrepreneurships,
+  uploadEntrepreneurship,
+  updateEntrepreneurship,
+  deleteEntrepreneurship,
+  downloadEntrepreneurshipProof
+} from '../controllers/entrepreneurship_projectsController.js';
+import { authenticate, authorizeRoles } from '../middlewares/auth.js';
+import upload from '../utils/upload.js';
 
 const router = express.Router();
 
-// GET - Fetch all entrepreneurship projects for logged-in student
-router.get('/entrepreneurship-projects', authenticate, authorizeRoles('student'), getEntrepreneurshipProjects);
-
-// POST - Upload new entrepreneurship project data
-router.post('/upload/entrepreneurship-project', authenticate, authorizeRoles('student'), uploadEntrepreneurshipProject);
-
-// PUT - Update existing entrepreneurship project
-router.put('/entrepreneurship-project/:id', authenticate, authorizeRoles('student'), updateEntrepreneurshipProject);
-
-// DELETE - Delete entrepreneurship project
-router.delete('/entrepreneurship-project/:id', authenticate, authorizeRoles('student'), deleteEntrepreneurshipProject);
+// Student routes
+router.get('/entrepreneurships', authenticate, authorizeRoles('student'), getEntrepreneurships);
+router.post('/upload/entrepreneurship', authenticate, authorizeRoles('student'), upload.single('proof'), uploadEntrepreneurship);
+router.put('/update/entrepreneurship/:id', authenticate, authorizeRoles('student'), upload.single('proof'), updateEntrepreneurship);
+router.get('/download/entrepreneurship/:id', authenticate, authorizeRoles('student'), downloadEntrepreneurshipProof);
+router.delete('/entrepreneurship/:id', authenticate, authorizeRoles('student'), deleteEntrepreneurship);
 
 export default router;

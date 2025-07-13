@@ -3,10 +3,14 @@ const otherAchievementSchema = new mongoose.Schema({
   email_id: { type: String, required: true },
   title: String,
   description: String,
-  month: String,
-  year: Number,
-  category: String,
-  certificate_url: String
+  proof: {
+    data: { type: Buffer },
+    contentType: { type: String },
+    fileName: { type: String }
+  },
+  
+}, {
+  timestamps: true,
 });
 
 const OtherAchievement = mongoose.model('OtherAchievement', otherAchievementSchema);

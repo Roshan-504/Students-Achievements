@@ -335,12 +335,6 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={
               loading ||
-              !formData.company_name ||
-              !formData.internship_role ||
-              !formData.department ||
-              !formData.start_date ||
-              !formData.external_mentor ||
-              !formData.internal_mentor ||
               (!formData.proof && !formData.no_certificate_yet) ||
               (!formData.ongoing && !formData.end_date)
             }

@@ -220,17 +220,21 @@ const WorkshopPage = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {workshops.map((workshop) => (
                   <tr key={workshop._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
-                          {workshop.title.charAt(0)}
+                    <td className="px-6 py-4 max-w-[400px]">
+                        <div className="flex items-center min-w-0"> {/* Added min-w-0 here */}
+                          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3 flex-shrink-0">
+                            {workshop.title.charAt(0)}
+                          </div>
+                          <div className="min-w-0 overflow-hidden"> {/* Added overflow-hidden */}
+                            <div className="text-sm font-semibold text-gray-900 truncate">
+                              {workshop.title}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate"> {/* Added truncate for duration if needed */}
+                              {workshop.duration}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">{workshop.title}</div>
-                          <div className="text-xs text-gray-500">{workshop.duration}</div>
-                        </div>
-                      </div>
-                    </td>
+                      </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{workshop.organizer}</div>
                     </td>
@@ -564,6 +568,7 @@ const WorkshopPage = () => {
                     no_certificate_yet: false
                   }}
                   onSubmit={handleFormSubmit}
+                  loading={loading}
                 />
               </div>
             </div>

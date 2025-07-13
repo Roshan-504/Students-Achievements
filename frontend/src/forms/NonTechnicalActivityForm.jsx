@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { FileText, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
 
-const NonTechnicalActivityForm = ({ initialData, onSubmit }) => {
+const NonTechnicalActivityForm = ({ initialData, onSubmit, loading }) => {
   const [formData, setFormData] = useState(
     initialData || {
       activity_name: '',
@@ -272,7 +272,7 @@ const NonTechnicalActivityForm = ({ initialData, onSubmit }) => {
           <button
             type="submit"
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={!formData.proof && !formData.no_certificate_yet}
+            disabled={loading || (!formData.proof && !formData.no_certificate_yet)}
             aria-label={initialData?._id ? 'Update Activity' : 'Add Activity'}
           >
             {initialData?._id ? 'Update Activity' : 'Add Activity'}

@@ -13,6 +13,8 @@ import nonTechnicalActivityRoutes from './routes/non_technical_activitiesRoutes.
 import paperPublicationRoutes from './routes/paper_publicationsRoutes.js'
 import workshopRoutes from './routes/workshopRoutes.js'
 import volunteeringRoutes from './routes/volunteering_experienceRoutes.js';
+import EntrepreneurshipRoutes from './routes/entrepreneurship_projectsRoutes.js'
+import OtherAchievementsRoutes from './routes/other_achievementsRoutes.js'
 
 import './config/passport.js'; // Load Passport config BEFORE routes
 import {connectDB} from './config/db.js';
@@ -46,6 +48,8 @@ app.use('/student',nonTechnicalActivityRoutes);
 app.use('/student',paperPublicationRoutes);
 app.use('/student',workshopRoutes);
 app.use('/student',volunteeringRoutes);
+app.use('/student',EntrepreneurshipRoutes);
+app.use('/student',OtherAchievementsRoutes);
 
 // Server
 const PORT = process.env.PORT || 3000;
