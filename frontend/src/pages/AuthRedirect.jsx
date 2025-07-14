@@ -1,30 +1,49 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
 
 const AuthRedirect = () => {
   const navigate = useNavigate();
-  const { checkAuth, user, loading } = useAuthStore();
+  const [params] = useSearchParams();
+  const { setToken, user, loading, checkAuth } = useAuthStore();
 
-  // 1. Call checkAuth only once on mount
   useEffect(() => {
-    checkAuth();
+    const token = params.get('token');
+    
+    if (token) {
+      // 1. Store token in localStorage
+      localStorage.setItem('jwt', token);
+      
+      // 2. Update auth store
+      setToken(token);
+      
+      // 3. Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
+      // 4. Immediately check auth
+      checkAuth().then(() => {
+        // This ensures we wait for auth check to complete
+      });
+    } else {
+      // If no token, check if we're already authenticated
+      checkAuth();
+    }
   }, []);
 
-  // 2. React to changes in `user` after it's updated
+  // Handle redirection after auth check completes
   useEffect(() => {
     if (loading) return;
 
-    if (user?.role === 'student') navigate('/student');
-    else if (user?.role === 'faculty') navigate('/faculty');
-    else if (user?.role === 'admin') navigate('/admin');
-    else navigate('/login');
-  }, [user, loading]); // <- depend on both user and loading
+    if (user?.role === 'student') navigate('/student', { replace: true });
+    else if (user?.role === 'faculty') navigate('/faculty', { replace: true });
+    else if (user?.role === 'admin') navigate('/admin', { replace: true });
+    else navigate('/login', { replace: true });
+  }, [user, loading]);
 
   return (
     <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
-      </div>
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+    </div>
   );
 };
 

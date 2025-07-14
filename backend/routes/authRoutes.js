@@ -25,16 +25,8 @@ router.get(
   }),
   (req, res) => {
     const { user, token } = req.user;
-
-    res.cookie('jwt', token, {
-      httpOnly: true,
-      secure: true, // always set this in production
-      sameSite: 'None', // required for cross-site
-      maxAge: 3600000,
-    });
-
-
-    res.redirect(`${process.env.FRONTEND_URL}/auth/redirect`);
+    console.log("going to redirect with token", token)
+    res.redirect(`${process.env.FRONTEND_URL}/auth/redirect?token=${token}`);
   },
   (err, req, res, next) => {
     // FAILURE
@@ -50,12 +42,6 @@ router.get(
 
 // Logout (Clear JWT Cookie)
 router.get('/logout', (req, res) => {
-  res.clearCookie('jwt', {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'None'
-  });
-
   res.status(200).json({ message: 'Logged out successfully' });
 });
 
