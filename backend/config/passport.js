@@ -1,7 +1,10 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-
 import { generateToken } from '../utils/jwtToken.js';
+
+import PersonalInfo from '../models/student_personal_infoModel.js';
+import faculty_profiles from '../models/faculty_profiles.js';
+import admin_accounts from '../models/admin_accounts.js';
 
 passport.use(
   new GoogleStrategy(
@@ -27,21 +30,21 @@ passport.use(
           });
         }
         
-        // 1. Check if email exists in any collection
-        // const [student, faculty, admin] = await Promise.all([
-        //   Student.findOne({ email_id: email }),
-        //   Faculty.findOne({ email_id: email }),
-        //   Admin.findOne({ email_id: email })
-        // ]);
+        //  Check if email exists in any collection
+        const [student, faculty, admin] = await Promise.all([
+          PersonalInfo.findOne({ email_id: email }),
+          faculty_profiles.findOne({ email_id: email }),
+          admin_accounts.findOne({ email_id: email })
+        ]);
 
-        const admin = {
-            email : email,
-            pic : pic,
-            firstName : firstName,
-            lastName : lastName
-        }
-        const faculty = null
-        const student = null
+        // const admin = {
+            // email : email,
+            // pic : pic,
+            // firstName : firstName,
+            // lastName : lastName
+        // }
+        // const faculty = null
+        // const student = null
 
         if (!student && !faculty && !admin) {
           const error = new Error('User not registered in system');
@@ -62,7 +65,13 @@ passport.use(
         }
 
         // user = {...user.toObject(),role:role} // toObject because it was originally mongoose document
-        user = {...user,role:role} // toObject because it was originally mongoose document
+        user = {...user.toObject(), 
+            role:role,  
+            email : email,
+            pic : pic,
+            firstName : firstName,
+            lastName : lastName} // toObject because it was originally mongoose document
+
         // 3. Generate JWT with essential data
         const token = generateToken(user);
 

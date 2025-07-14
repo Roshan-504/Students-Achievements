@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const adminAccountSchema = new mongoose.Schema({
   email_id: { type: String, required: true, unique: true },
   role: String,
