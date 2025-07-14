@@ -61,7 +61,7 @@ const StudentDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Top Navbar */}
       <nav className="bg-white shadow-lg border-b border-gray-200 fixed w-full top-0 z-50 transition-all duration-300 ease-in-out">
-  <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex justify-between items-center">
+  <div className="max-w-full mx-auto px-4 sm:px-8 lg:px-12 h-16 flex justify-between items-center">
 
     {/* Left Section: Sidebar Toggle + Dashboard Title */}
     <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted spacing for smaller screens */}
