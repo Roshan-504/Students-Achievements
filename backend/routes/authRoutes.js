@@ -28,10 +28,11 @@ router.get(
 
     res.cookie('jwt', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: true, // always set this in production
+      sameSite: 'None', // required for cross-site
       maxAge: 3600000,
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // critical for cross-site
     });
+
 
     res.redirect(`${process.env.FRONTEND_URL}/auth/redirect`);
   },
@@ -51,8 +52,8 @@ router.get(
 router.get('/logout', (req, res) => {
   res.clearCookie('jwt', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax'
+    secure: true,
+    sameSite: 'None'
   });
 
   res.status(200).json({ message: 'Logged out successfully' });
