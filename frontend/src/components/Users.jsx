@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, ChevronRight, Users as UsersIcon, BookOpen, TrendingUp } from 'lucide-react';
 import UserDetails from './UserDetails';
-
+import BulkUpload from '../components/BulkUpload'
 const Users = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [showUserDetails, setShowUserDetails] = useState(false);
-
+  const [isModalOpen, setIsModalOpen] = useState(false); 
   // Mock data - optimized for performance
   const [dashboardData] = useState({
     batches: [
@@ -120,10 +120,17 @@ const Users = () => {
             </div>
             
             {/* Create Button */}
-            <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-              <Plus size={20} className="mr-2" />
-              Create Batch
-            </button>
+            <div>
+              <button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              onClick={() => setIsModalOpen(true)}>
+                <Plus size={20} className="mr-2" />
+                Create Batch
+              </button>
+              <BulkUpload 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+              />
+            </div>
           </div>
         </div>
       </div>

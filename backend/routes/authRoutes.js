@@ -25,7 +25,6 @@ router.get(
   }),
   (req, res) => {
     const { user, token } = req.user;
-    console.log("going to redirect with token", token)
     res.redirect(`${process.env.FRONTEND_URL}/auth/redirect?token=${token}`);
   },
   (err, req, res, next) => {

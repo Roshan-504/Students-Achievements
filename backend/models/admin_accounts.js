@@ -4,4 +4,6 @@ const adminAccountSchema = new mongoose.Schema({
   contact_no: String
 });
 
-module.exports = mongoose.model('admin_accounts', adminAccountSchema);
+const admin_accounts = mongoose.model('admin_accounts', adminAccountSchema);
+
+export default admin_accounts;

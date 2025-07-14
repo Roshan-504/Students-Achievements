@@ -1,4 +1,6 @@
 import xlsx from 'xlsx';
+import PersonalInfo from '../models/student_personal_infoModel.js';
+import faculty_profiles from '../models/faculty_profiles.js';
 // import Student from '../models/Student.js';
 // import Faculty from '../models/Faculty';
 
@@ -33,7 +35,7 @@ export const processExcelData = async (buffer, type) => {
       };
     });
 
-    await Student.insertMany(validatedData);
+    await PersonalInfo.insertMany(validatedData);
     return { count: validatedData.length };
 
   } else if (type === 'faculty') {
@@ -46,7 +48,7 @@ export const processExcelData = async (buffer, type) => {
       contact_no: row['Contact Number'] || null
     }));
 
-    await Faculty.insertMany(validatedData);
+    await faculty_profiles.insertMany(validatedData);
     return { count: validatedData.length };
   }
 

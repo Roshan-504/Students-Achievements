@@ -1,9 +1,6 @@
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-// import User from '../models/User.js';
-// import Student from '../models/Student.js'; // Your student model
-// import Faculty from '../models/Faculty.js'; // Your faculty model
-// import Admin from '../models/Admin.js'; // Your admin model
+
 import { generateToken } from '../utils/jwtToken.js';
 
 passport.use(
@@ -37,13 +34,13 @@ passport.use(
         //   Admin.findOne({ email_id: email })
         // ]);
 
-        const faculty = {
+        const admin = {
             email : email,
             pic : pic,
             firstName : firstName,
             lastName : lastName
         }
-        const admin = null
+        const faculty = null
         const student = null
 
         if (!student && !faculty && !admin) {

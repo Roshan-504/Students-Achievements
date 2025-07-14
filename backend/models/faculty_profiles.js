@@ -1,3 +1,5 @@
+import mongoose from "mongoose";
+
 const facultyProfileSchema = new mongoose.Schema({
   email_id: { type: String, required: true, unique: true },
   name: String,
@@ -7,4 +9,6 @@ const facultyProfileSchema = new mongoose.Schema({
   assigned_batches: [String]
 });
 
-module.exports = mongoose.model('faculty_profiles', facultyProfileSchema);
+const faculty_profiles = mongoose.model('faculty_profiles', facultyProfileSchema);
+
+export default faculty_profiles;
