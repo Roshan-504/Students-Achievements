@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import PersonalInfo from '../models/student_personal_infoModel.js';
+import student_profile from '../models/student_profileModel.js';
 import Internship from '../models/internshipsModel.js';
 import CourseCertification from '../models/course_certificationsModel.js';
 import Entrepreneurship from '../models/entrepreneurship_projectsModel.js';
@@ -60,12 +60,12 @@ router.get('/students', authenticate, async (req, res) => {
     if (email) query.email_id = { $regex: email, $options: 'i' };
     if (prn) query.prn = { $regex: prn, $options: 'i' };
 
-    const students = await PersonalInfo.find(query)
+    const students = await student_profile.find(query)
       .skip((page - 1) * limit)
       .limit(Number(limit))
       .select('email_id prn first_name last_name department batch_no class_division current_sgpi gender');
 
-    const total = await PersonalInfo.countDocuments(query);
+    const total = await student_profile.countDocuments(query);
 
     res.json({
       students,

@@ -1,23 +1,24 @@
 // models/PersonalInfo.js
 import mongoose from 'mongoose';
 
-const personalInfoSchema = new mongoose.Schema({
+const studentProfileSchema = new mongoose.Schema({
   email_id: { type: String, required: true, unique: true },
   prn: String,
   last_name: String,
   first_name: String,
   middle_name: String,
   mother_name: String,
-  department: { type: String, default: "INFT" },
+  department: String,
   batch_no: Number,
-  class_division: String,
+  division: String,
   gender: String,
   abc_id: String,
-  current_sgpi: Number,
+  average_sgpi: Number,
   phone: String,
   linkedin_url: String,
-  other_urls: [String]
+  other_urls: [String],
+  last_updated: Date
 });
 
-const PersonalInfo = mongoose.model('PersonalInfo', personalInfoSchema);
-export default PersonalInfo;
+const student_profile = mongoose.model('student_profile', studentProfileSchema);
+export default student_profile;

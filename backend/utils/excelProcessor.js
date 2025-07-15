@@ -1,5 +1,5 @@
 import xlsx from 'xlsx';
-import PersonalInfo from '../models/student_personal_infoModel.js';
+import student_profile from '../models/student_profileModel.js';
 import faculty_profiles from '../models/faculty_profiles.js';
 // import Student from '../models/Student.js';
 // import Faculty from '../models/Faculty';
@@ -35,7 +35,7 @@ export const processExcelData = async (buffer, type) => {
       };
     });
 
-    await PersonalInfo.insertMany(validatedData);
+    await student_profile.insertMany(validatedData);
     return { count: validatedData.length };
 
   } else if (type === 'faculty') {

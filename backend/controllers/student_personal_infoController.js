@@ -1,4 +1,4 @@
-import PersonalInfo from '../models/student_personal_infoModel.js'; 
+import student_profile from '../models/student_profileModel.js'; 
 import Internship from '../models/internshipsModel.js';
 import Course from '../models/course_certificationsModel.js';
 import TechnicalActivity from '../models/technical_activitiesModel.js';
@@ -55,11 +55,57 @@ export const getActivityStatus = async (req, res) => {
 };
 
 
+// Route to update student profile
+export const updateStudentProfile = async (req, res) => {
+  try {
+
+    const updateData = req.body;
+
+    // Validate data types
+    if (updateData.batch_no && !Number.isInteger(Number(updateData.batch_no))) {
+      return res.status(400).json({ message: 'Batch number must be an integer' });
+    }
+    if (updateData.average_sgpi && (isNaN(updateData.average_sgpi) || updateData.average_sgpi < 0 || updateData.average_sgpi > 10)) {
+      return res.status(400).json({ message: 'Average SGPI must be between 0 and 10' });
+    }
+    if (updateData.phone && !updateData.phone.match(/^\+?\d{10,15}$/)) {
+      return res.status(400).json({ message: 'Invalid phone number' });
+    }
+    if (updateData.linkedin_url && !updateData.linkedin_url.match(/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/)) {
+      return res.status(400).json({ message: 'Invalid LinkedIn URL' });
+    }
+    if (updateData.other_urls && !Array.isArray(updateData.other_urls)) {
+      return res.status(400).json({ message: 'Other URLs must be an array' });
+    }
+    if (updateData.other_urls && updateData.other_urls.some(url => !url.match(/^(https?:\/\/)?([\w-]+\.)+[\w-]+(\/[\w-./?%&=]*)?$/))) {
+      return res.status(400).json({ message: 'Invalid URL in other_urls' });
+    }
+
+    // Update profile
+    const update = { ...updateData, last_updated: new Date() };
+    const profile = await PersonalInfo.findOneAndUpdate(
+      { email_id: req.user.email },
+      { $set: update },
+      { new: true, runValidators: true }
+    ).lean();
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Profile not found' });
+    }
+
+    res.json({ profile });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
 
 export const getPersonalInfo = async (req, res) => {
     try {
         const userEmail = req.user.email;
-        const personalInfo = await PersonalInfo.findOne({ email_id: userEmail });
+        const personalInfo = await student_profile.findOne({ email_id: userEmail });
         
         if (!personalInfo) {
             return res.status(404).json({
@@ -83,100 +129,3 @@ export const getPersonalInfo = async (req, res) => {
     }
 };
 
-/**
- * @desc    Create personal information (first time setup)
- * @route   POST /api/upload/personal-info
- * @access  Private (Student)
- */
-export const createPersonalInfo = async (req, res) => {
-    try {
-        const userEmail = req.user.email;
-        
-        const existingInfo = await PersonalInfo.findOne({ email_id: userEmail });
-        if (existingInfo) {
-            return res.status(409).json({
-                success: false,
-                message: 'Personal information already exists. Use PUT to update.'
-            });
-        }
-        
-        const personalInfoData = {
-            ...req.body,
-            email_id: userEmail
-        };
-        
-        const newPersonalInfo = new PersonalInfo(personalInfoData);
-        const savedPersonalInfo = await newPersonalInfo.save();
-        
-        res.status(201).json({
-            success: true,
-            data: savedPersonalInfo,
-            message: 'Personal information created successfully'
-        });
-    } catch (error) {
-        console.error('Error creating personal information:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating personal information',
-            error: error.message
-        });
-    }
-};
-
-/**
- * @desc    Update personal information (only updatable fields)
- * @route   PUT /api/personal-info
- * @access  Private (Student)
- */
-export const updatePersonalInfo = async (req, res) => {
-    try {
-        const userEmail = req.user.email;
-        
-        const updatableFields = [
-            'current_sgpi', 
-            'phone', 
-            'linkedin_url', 
-            'other_urls'
-        ];
-        
-        const updateData = {};
-        updatableFields.forEach(field => {
-            if (req.body[field] !== undefined) {
-                updateData[field] = req.body[field];
-            }
-        });
-        
-        if (Object.keys(updateData).length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'No updatable fields provided'
-            });
-        }
-        
-        const updatedPersonalInfo = await PersonalInfo.findOneAndUpdate(
-            { email_id: userEmail },
-            updateData,
-            { new: true, runValidators: true } 
-        );
-        
-        if (!updatedPersonalInfo) {
-            return res.status(404).json({
-                success: false,
-                message: 'Personal information not found'
-            });
-        }
-        
-        res.status(200).json({
-            success: true,
-            data: updatedPersonalInfo,
-            message: 'Personal information updated successfully'
-        });
-    } catch (error) {
-        console.error('Error updating personal information:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error updating personal information',
-            error: error.message
-        });
-    }
-};
