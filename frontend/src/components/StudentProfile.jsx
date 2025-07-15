@@ -32,24 +32,46 @@ const StudentProfile = () => {
 
   const validateField = (field, value) => {
     if (field === 'phone') {
-      return value.match(/^\+?\d{10,15}$/) ? '' : 'Invalid phone number (e.g., +919876543210).';
+      return typeof value === 'string' && value.match(/^\+?\d{10,15}$/)
+        ? ''
+        : 'Invalid phone number (e.g., +919876543210).';
     }
-    if (field === 'linkedin_url' || field === 'other_urls') {
-      return value.match(/^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(:\d{1,5})?(\/[\w-.\/?%&=]*)?$/) ? '' : 'Invalid URL format.';
+
+    if (field === 'linkedin_url') {
+      return typeof value === 'string' && value.match(/^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[\w-.~:?#[\]@!$&'()*+,;=]*)?$/)
+        ? ''
+        : 'Invalid LinkedIn URL.';
     }
+
+    if (field === 'other_urls') {
+      if (!Array.isArray(value)) return 'Invalid input for links.';
+      const invalidUrls = value.filter(
+        (url) =>
+          typeof url !== 'string' ||
+          !url.match(/^(https?:\/\/)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/[\w-.~:?#[\]@!$&'()*+,;=]*)?$/)
+      );
+      return invalidUrls.length ? 'One or more URLs are invalid.' : '';
+    }
+
     if (field === 'average_sgpi') {
       const num = parseFloat(value);
-      return !isNaN(num) && num >= 0 && num <= 10 ? '' : 'SGPI must be a number between 0 and 10.';
+      return !isNaN(num) && num >= 0 && num <= 10 ? '' : 'SGPI must be between 0 and 10.';
     }
+
     if (field === 'batch_no') {
       const num = parseInt(value);
       return !isNaN(num) && num > 0 ? '' : 'Batch number must be a positive integer.';
     }
+
     if (['first_name', 'last_name', 'department', 'division', 'gender', 'abc_id', 'mother_name', 'prn'].includes(field)) {
-      return value.trim() === '' ? `${field.replace('_', ' ').charAt(0).toUpperCase() + field.replace('_', ' ').slice(1)} cannot be empty.` : '';
+      return typeof value === 'string' && value.trim() !== ''
+        ? ''
+        : `${field.replace('_', ' ').charAt(0).toUpperCase() + field.replace('_', ' ').slice(1)} cannot be empty.`;
     }
+
     return '';
   };
+
 
   const handleEditClick = (field, value) => {
     setEditField(field);
@@ -226,7 +248,7 @@ const StudentProfile = () => {
 
         {/* Edit Modal */}
         {editField && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 z-50 animate-fade-in">
+          <div className="fixed inset-0 bg-gray-900/20 bg-opacity-40  flex items-center justify-center p-4 sm:p-6 z-50 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8 transform scale-95 animate-scale-in">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800">

@@ -1,93 +1,95 @@
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { ChevronRight, Briefcase, BookOpen, Code, Users, Book, FileText, Lightbulb, Heart, Award, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+
 import axiosInstance from '../services/axiosInstance';
 
 const CardContainer = () => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const [cards, setCards] = useState([
-    {
-      id: 1,
-      title: 'Internships',
-      message: "Add details of internships you've completed or are currently doing as a student intern.",
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/internships',
-    },
-    {
-      id: 2,
-      title: 'Courses/Certifications',
-      message: 'Add technical or non-technical courses and certifications that helped you gain new skills or explore your interests.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/courses',
-    },
-    {
-      id: 3,
-      title: 'Technical Activities',
-      message: 'Record your participation in technical events like coding contests, hackathons, workshops, and tech conferences.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/tech-activities',
-    },
-    {
-      id: 4,
-      title: 'Non-Technical Activities',
-      message: 'Mention your roles in cultural events, sports, college fests, debates, etc.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/non-tech-activities',
-    },
-    {
-      id: 5,
-      title: 'Workshops',
-      message: "List the workshops you've attended to learn new skills or deepen your knowledge in a specific area.",
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/workshop',
-    },
-    {
-      id: 6,
-      title: 'Paper Publications',
-      message: "Share your contributions to research and academics through papers you've published or presented in conferences or journals.",
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/paper-publications',
-    },
-    {
-      id: 7,
-      title: 'Enterprenurship/Projects',
-      message: 'Highlight your start-up ideas, freelance projects, or college projects.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/entrepreneurship',
-    },
-    {
-      id: 8,
-      title: 'Volunteering',
-      message: 'Add details of your social work or volunteer contributions with any NGOs, college committees, or social initiatives.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/volunteering',
-    },
-    {
-      id: 9,
-      title: 'Patents',
-      message: "Record your innovation and creativity by listing patents you've filed or been a part of as an inventor.",
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/patents',
-    },
-    {
-      id: 10,
-      title: 'Other Achievements',
-      message: 'Include any exceptional accomplishments not covered elsewhere - awards, media features, or unique recognitions.',
-      status: '',
-      statusColor: 'bg-green-500',
-      route: '/student/achievements',
-    },
-  ]);
+  {
+    id: 1,
+    title: 'Internships',
+    message: 'Add details of your internships.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/internships',
+  },
+  {
+    id: 2,
+    title: 'Courses/Certifications',
+    message: 'List your completed courses or certifications.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/courses',
+  },
+  {
+    id: 3,
+    title: 'Technical Activities',
+    message: 'Mention technical events and competitions.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/tech-activities',
+  },
+  {
+    id: 4,
+    title: 'Non-Technical Activities',
+    message: 'Add cultural and non-tech event roles.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/non-tech-activities',
+  },
+  {
+    id: 5,
+    title: 'Workshops',
+    message: 'Include workshops you have attended.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/workshop',
+  },
+  {
+    id: 6,
+    title: 'Paper Publications',
+    message: 'Add published or presented research papers.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/paper-publications',
+  },
+  {
+    id: 7,
+    title: 'Enterprenurship/Projects',
+    message: 'Highlight start-ups or key projects.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/entrepreneurship',
+  },
+  {
+    id: 8,
+    title: 'Volunteering',
+    message: 'List social or volunteer contributions.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/volunteering',
+  },
+  {
+    id: 9,
+    title: 'Patents',
+    message: 'Mention patents filed or contributed to.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/patents',
+  },
+  {
+    id: 10,
+    title: 'Other Achievements',
+    message: 'Add awards or notable recognitions.',
+    status: '',
+    statusColor: 'bg-green-500',
+    route: '/student/achievements',
+  },
+]);
+
   const [loading, setLoading] = useState(true);
 
   // Fetch submission statuses
@@ -100,8 +102,8 @@ const CardContainer = () => {
         setCards(prevCards =>
           prevCards.map(card => ({
             ...card,
-            status: statuses[card.title] || '',
-            statusColor: statuses[card.title] === 'Pending Submission' ? 'bg-orange-500' : 'bg-green-500',
+            status: statuses[card.title] === 'Pending Submission' ? 'Pending Submission' : '',
+            statusColor: statuses[card.title] === 'Pending Submission' ? 'bg-orange-500 shadow-sm' : '',
           }))
         );
       } catch (error) {
@@ -134,37 +136,55 @@ const CardContainer = () => {
           className="mx-auto overflow-y-auto scroll-smooth"
           style={{ scrollbarWidth: 'thin', scrollbarColor: '#3b82f6 #e5e7eb' }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-2">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-2">
              { cards.map((card) => (
                 <div
                   key={card.id}
-                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-1 hover:bg-gray-50 border border-gray-100 hover:border-blue-200 p-6 relative overflow-visible"
+                  className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 ease-out transform hover:scale-105 hover:-translate-y-1 hover:bg-gray-50 border border-gray-100 hover:border-blue-200 p-6 relative overflow-visible flex flex-col"
                   style={{
                     animation: `fadeInUp 0.6s ease-out ${cards.indexOf(card) * 0.1}s both`,
                   }}
                 >
-                  {/* Status Badge */}
-                  <div
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold text-white mb-4 ${card.statusColor} shadow-sm`}
-                  >
-                    {card.status}
+                  {/* Top Row: Icon and Status Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="inline-flex items-center justify-center px-2 py-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-md shadow-md" style={{minWidth: '32px', minHeight: '28px'}}>
+                      {(() => {
+                        switch(card.title) {
+                          case 'Internships': return <Briefcase className="w-4 h-4" />;
+                          case 'Courses/Certifications': return <BookOpen className="w-4 h-4" />;
+                          case 'Technical Activities': return <Code className="w-4 h-4" />;
+                          case 'Non-Technical Activities': return <Users className="w-4 h-4" />;
+                          case 'Workshops': return <Book className="w-4 h-4" />;
+                          case 'Paper Publications': return <FileText className="w-4 h-4" />;
+                          case 'Enterprenurship/Projects': return <Lightbulb className="w-4 h-4" />;
+                          case 'Volunteering': return <Heart className="w-4 h-4" />;
+                          case 'Patents': return <Award className="w-4 h-4" />;
+                          case 'Other Achievements': return <Star className="w-4 h-4" />;
+                          default: return null;
+                        }
+                      })()}
+                    </span>
+                    <span className={`flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold text-white ${card.statusColor}`} style={{minWidth: '48px', minHeight: '18px'}}>
+                      {card.status}
+                    </span>
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors duration-200">
+                  <h3 className="text-l font-bold text-gray-600 mb-2  group-hover:text-blue-600 transition-colors duration-200">
                     {card.title}
                   </h3>
 
                   {/* Message */}
-                  <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">{card.message}</p>
+                  <p className="text-sm text-gray-600 mb-8 leading-relaxed line-clamp-3">{card.message}</p>
 
-                  {/* Navigate Button */}
+                  {/* Navigate Button - bottom left */}
                   <button
                     onClick={() => handleNavigate(card.route)}
-                    className="inline-flex items-center gap-2 px-4 py-2 cursor-pointer bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                    className="absolute left-4 bottom-4 z-20 inline-flex items-center gap-1 mt-4 px-2 py-1 cursor-pointer bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-md hover:from-blue-600 hover:to-purple-600 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg "
+                    style={{minWidth: '70px', minHeight: '28px'}}
                   >
-                    {card.status !== 'Completed' ? 'Update' : 'Add New'}
-                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
+                    {card.status === 'Pending Submission' ? 'Update' : 'Add New'}
+                    <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform duration-200" />
                   </button>
                 </div>
               ))

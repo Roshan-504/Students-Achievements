@@ -2,6 +2,7 @@ import express from 'express';
 import passport from 'passport';
 import cookieParser from 'cookie-parser';
 import { authenticate } from '../middlewares/auth.js';
+import student_profile from '../models/student_profileModel.js';
 
 const router = express.Router();
 
@@ -46,10 +47,29 @@ router.get('/logout', (req, res) => {
 
 
 // Profile route
-router.get('/profile', authenticate, (req, res) => {
-  res.json({
-    user: req.user,
-  });
+router.get('/profile', authenticate, async (req, res) => {
+  try {
+    if (req.user.role === 'student') {
+      const profile = await student_profile.findOne({ email_id: req.user.email }).lean();
+
+      if (!profile) {
+        return res.status(404).json({ message: 'Student profile not found' });
+      }
+      return res.json({
+        user: {
+          ...req.user,
+          ...profile, // updated fields from database
+        },
+      });
+    }
+
+    // For faculty or admin, return just the JWT data
+    res.json({ user: req.user });
+  } catch (error) {
+    console.error('Error fetching profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
+
 
 export default router;

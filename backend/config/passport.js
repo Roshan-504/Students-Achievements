@@ -32,20 +32,20 @@ passport.use(
         }
         
         // 1. Check if email exists in any collection
-        // const [student, faculty, admin] = await Promise.all([
-        //   student_profile.findOne({ email_id: email }),
-        //   faculty_profiles.findOne({ email_id: email }),
-        //   admin_accounts.findOne({ email_id: email })
-        // ]);
+        const [student, faculty, admin] = await Promise.all([
+          student_profile.findOne({ email_id: email }),
+          faculty_profiles.findOne({ email_id: email }),
+          admin_accounts.findOne({ email_id: email })
+        ]);
 
-        const faculty = {
-            email : email,
-            pic : pic,
-            firstName : firstName,
-            lastName : lastName
-        }
-        const student = null
-        const admin = null
+        // const admin = {
+        //     email : email,
+        //     pic : pic,
+        //     firstName : firstName,
+        //     lastName : lastName
+        // }
+        // const faculty = null
+        // const student = null
 
         if (!student && !faculty && !admin) {
           const error = new Error('User not registered in system');
@@ -65,15 +65,15 @@ passport.use(
           user = admin;
         }
 
-        // user = {...user.toObject()
-        //         ,role:role, 
-        //         email : email,
-        //         pic : pic,
-        //         firstName : firstName,
-        //         lastName : lastName
-        //       } // toObject because it was originally mongoose document
+        user = {...user.toObject()
+                ,role:role, 
+                email : email,
+                pic : pic,
+                firstName : firstName,
+                lastName : lastName
+              } // toObject because it was originally mongoose document
 
-        user = {...user,role:role} 
+        // user = {...user,role:role} 
 
         // 3. Generate JWT with essential data
         const token = generateToken(user);

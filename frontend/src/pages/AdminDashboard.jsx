@@ -32,13 +32,7 @@ const AdminDashboard = () => {
     
     fetchMessages();
   }, [activeTab]);
-  // Admin user data
-  const [admin, setAdmin] = useState({
-    name: 'Admin User',
-    email: 'admin@university.edu',
-    role: 'System Administrator',
-    avatar: null
-  });
+
   
 
 
@@ -48,11 +42,6 @@ const AdminDashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Handle logout
-  const handleLogout = () => {
-    console.log('Admin logout clicked');
-    // Will integrate with auth logic
-  };
 
   // Tab switching with smooth animation
   const handleTabChange = (tab) => {

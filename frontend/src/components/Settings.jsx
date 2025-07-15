@@ -385,7 +385,8 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
         
 
       {/* Notices Section */}
-      <div className="space-y-6">
+      {/* <div className="space-y-6">
+      
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-900 flex items-center">
             <svg className="w-6 h-6 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -404,7 +405,7 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
           </button>
         </div>
 
-        {/* Notices List with Vertical Scroll */}
+        
         <div className="max-h-96 overflow-y-auto pr-2">
           <div className="space-y-4">
             {dashboardData.notices.map((notice) => (
@@ -456,45 +457,11 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
               ))}
             </div>
           </div>
-        </div>
+        </div> */}
       
 
-      {/* System Settings Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-          <svg className="w-6 h-6 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          System Configuration
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Email Notifications Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Email Notifications</h4>
-              <p className="text-sm text-gray-500">Send email alerts to administrators</p>
-            </div>
-            <button className="bg-indigo-600 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none">
-              <span className="translate-x-5 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-            </button>
-          </div>
-
-          {/* Maintenance Mode Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div>
-              <h4 className="font-medium text-gray-900">Maintenance Mode</h4>
-              <p className="text-sm text-gray-500">Temporarily disable user access</p>
-            </div>
-            <button className="bg-gray-200 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none">
-              <span className="translate-x-0 inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Notice Modal - This popup appears when creating/editing notices */}
-      {showNoticeModal && (
+      {/* {showNoticeModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
@@ -515,7 +482,6 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
               </button>
             </div>
             <form className="space-y-4">
-              {/* Notice Title Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                 <input
@@ -527,7 +493,7 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
                 />
               </div>
               
-              {/* Notice Type Selection */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
                 <select
@@ -542,7 +508,7 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
                 </select>
               </div>
               
-              {/* Notice Message Input */}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
                 <textarea
@@ -554,7 +520,6 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
                 />
               </div>
               
-              {/* Modal Action Buttons */}
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
@@ -577,7 +542,7 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
             </form>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };

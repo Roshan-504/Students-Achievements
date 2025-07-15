@@ -14,14 +14,6 @@ const StudentContent = () => {
   const containerRef = useRef(null);
   
   // Mock data
-const studentData = {
-    name: "Alex Johnson",
-    studentId: "STU2024001",
-    profilePicture: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    lastLogin: "2024-06-21 09:30 AM",
-    semester: "Spring 2024",
-    gpa: "3.85"
-  };
 
   const alerts = [
     {
@@ -90,28 +82,33 @@ const studentData = {
     return (
         <>
         {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 mb-6 shadow-lg">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-          Welcome back, {user.firstName + " " + user.lastName}! 👋
-        </h1>
-        <p className="text-blue-100 flex items-center">
-          <Clock className="mr-2" size={16} />
-          Last login: {studentData.lastLogin}
-        </p>
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 mb-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] w-full">
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <h1 className="text-xl font-bold mb-0.5 ">
+              Welcome back, {user.firstName}! 👋
+            </h1>
+            {user.last_updated && <p className="text-blue-100 text-xs flex items-center opacity-90">
+              <Clock className="mr-1.5" size={14} />
+              last Updated at: {new Date(user.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </p>}
+          </div>
+        </div>
       </div>
+        
 
       {/* Dashboard Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Alerts Section */}
-        <div className="lg:col-span-2 ">
+        {/* <div className="lg:col-span-2 ">
           <div className="bg-white rounded-xl shadow-lg p-6 overflow-hidden">
             <h2 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
               <Bell className="mr-2 text-orange-500" size={24} />
                 Important Alerts & Deadlines
             </h2>
     
-            {/* Animated Alerts Container */}
-            <div 
+            
+             <div 
               className="relative h-80 overflow-hidden rounded-lg bg-gradient-to-b from-gray-50 to-white"
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => {
@@ -119,11 +116,11 @@ const studentData = {
                 setHoveredAlertId(null);
               }}
             >
-              {/* Smooth gradient overlays for seamless visual transition */}
+              
               <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
               <div className="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
               
-              {/* Moving Alerts Container */}
+              
               <div 
                 ref={containerRef}
                 className="flex flex-col"
@@ -178,7 +175,7 @@ const studentData = {
                       />
                     </div>
                     
-                    {/* Priority indicator dot */}
+                    
                     <div className="absolute top-2 right-2">
                       <div 
                         className={`w-2 h-2 rounded-full ${
@@ -191,9 +188,9 @@ const studentData = {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>  
           </div>
-        </div>
+        </div> */}
       </div>
       </>
     )

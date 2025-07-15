@@ -16,6 +16,6 @@ router.get('/activity-status', authenticate, authorizeRoles('student'), getActiv
 router.get('/personal-info', authenticate, authorizeRoles('student'), getPersonalInfo);
 
 // PUT - Update personal information (only updatable fields)
-router.put('/update-student-profile', authenticate, authorizeRoles(['student','admin']), updateStudentProfile);
+router.put('/update-student-profile', authenticate, authorizeRoles('student','admin'), updateStudentProfile);
 
 export default router;

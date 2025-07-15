@@ -83,7 +83,7 @@ export const updateStudentProfile = async (req, res) => {
 
     // Update profile
     const update = { ...updateData, last_updated: new Date() };
-    const profile = await PersonalInfo.findOneAndUpdate(
+    const profile = await student_profile.findOneAndUpdate(
       { email_id: req.user.email },
       { $set: update },
       { new: true, runValidators: true }

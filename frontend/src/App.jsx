@@ -7,7 +7,6 @@ import AuthRedirect from './pages/AuthRedirect';
 import AdminDashboard from './pages/AdminDashboard';
 import NotFoundPage from './pages/NotFoundPage';
 import FacultyDashboard from './pages/FacultyDashboard';
-import FilterTest from './pages/FilterTest';
 import StudentContent from './components/StudentContent';
 import CardContainer from './components/CardContainer';
 import StudentProfile from './components/StudentProfile';

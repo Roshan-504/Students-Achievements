@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { FileText, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, Upload, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const InternshipForm = ({ initialData, onSubmit, loading }) => {
   const [formData, setFormData] = useState(
@@ -18,6 +19,7 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
     }
   );
   const [isDragging, setIsDragging] = useState(false);
+  const [certificateError, setCertificateError] = useState(null);
   const dragCounter = useRef(0);
   const fileInputRef = useRef(null);
 
@@ -99,8 +101,26 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setCertificateError(null); // Reset error state
+    
+    // Validate certificate status
+    if (!formData.proof && !formData.no_certificate_yet) {
+      setCertificateError('Please either upload your certificate or check the box if you will submit it later');
+      toast.error(certificateError);
+      return;
+    }
+
+    // Validate end date if not ongoing
+    if (!formData.ongoing && !formData.end_date) {
+      setCertificateError('Please provide an end date or mark the internship as ongoing');
+      toast.error(certificateError);
+      return;
+    }
+
+    // If we get here, form is valid
     onSubmit(formData);
   };
+
 
   return (
     <div className="bg-white shadow-2xl border border-slate-200 p-6">
@@ -247,13 +267,12 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
           {/* Internal Mentor */}
           <div>
             <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
-              Internal Mentor & Designation <span className="text-red-600">*</span>
+              Internal Mentor & Designation (Optional)
             </label>
             <p className="text-xs text-gray-400 mb-1">e.g., Prof. A. Patel, Assistant Professor</p>
             <input
               type="text"
               name="internal_mentor"
-              required
               value={formData.internal_mentor}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
@@ -333,17 +352,18 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
           <button
             type="submit"
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={
-              loading ||
-              (!formData.proof && !formData.no_certificate_yet) ||
-              (!formData.ongoing && !formData.end_date)
-            }
             aria-label={initialData?._id ? 'Update Internship' : 'Add Internship'}
           >
             {initialData?._id ? 'Update Internship' : 'Add Internship'}
           </button>
         </div>
       </form>
+      {certificateError && (
+            <div className="flex items-center text-red-600 text-sm p-2 mt-2">
+              <XCircle className="w-4 h-4 mr-1" />
+              {certificateError}
+            </div>
+          )}
     </div>
   );
 };
