@@ -13,5 +13,7 @@ const patentSchema = new mongoose.Schema({
   date: Date
 });
 
+patentSchema.index({ email_id: 1 });
+
 const Patent = mongoose.model('Patent', patentSchema);
 export default Patent;

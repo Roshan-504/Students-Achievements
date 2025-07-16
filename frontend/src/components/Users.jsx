@@ -21,7 +21,6 @@ const Users = () => {
   const uploadTypeOptions = [
     { value: 'students', label: 'Students Data' },
     { value: 'faculty', label: 'Faculty Data' },
-    { value: 'courses', label: 'Course Data' }
   ];
 
   const filteredBatches = batches.filter(batch =>

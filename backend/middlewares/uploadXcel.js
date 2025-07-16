@@ -16,13 +16,13 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({
+const uploadXcel = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 15 * 1024 * 1024, // 15MB
+    fileSize: 50 * 1024 * 1024, // 15MB
     files: 1 // Allow only 1 file per upload
   }
 });
 
-export default upload;
+export default uploadXcel;

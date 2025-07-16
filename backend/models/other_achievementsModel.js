@@ -13,5 +13,7 @@ const otherAchievementSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+otherAchievementSchema.index({ email_id: 1 });
+
 const OtherAchievement = mongoose.model('OtherAchievement', otherAchievementSchema);
 export default OtherAchievement;

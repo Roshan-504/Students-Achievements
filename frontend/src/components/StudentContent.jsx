@@ -90,7 +90,15 @@ const StudentContent = () => {
             </h1>
             {user.last_updated && <p className="text-blue-100 text-xs flex items-center opacity-90">
               <Clock className="mr-1.5" size={14} />
-              last Updated at: {new Date(user.last_updated).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              last Updated at: {new Date(user.last_updated).toLocaleString('en-GB', {
+                                day: '2-digit',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                hour12: true
+                              })
+                              }
             </p>}
           </div>
         </div>

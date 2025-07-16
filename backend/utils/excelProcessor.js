@@ -1,8 +1,6 @@
 import xlsx from 'xlsx';
 import student_profile from '../models/student_profileModel.js';
 import faculty_profiles from '../models/faculty_profiles.js';
-// import Student from '../models/Student.js';
-// import Faculty from '../models/Faculty';
 
 /**
  * Processes Excel buffer and validates data
@@ -16,57 +14,81 @@ export const processExcelData = async (buffer, type) => {
 
   if (!jsonData.length) throw new Error('Excel file is empty');
 
-  if (type === 'students') {
-    const validatedData = jsonData.map(row => {
-      const email = row['Email ID']?.toLowerCase();
-      if (!email || !email.endsWith('@ves.ac.in')) {
-        throw new Error(`Invalid or missing email: ${row['Email ID']}`);
-      }
+  let count = 0;
 
-      return {
+  if (type === 'students') {
+    for (let i = 0; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      const rowNum = i + 2; // Excel row number (accounting for headers)
+
+      const email = row['Email ID']?.toLowerCase()?.trim();
+      const division = row['Division']?.trim();
+      const department = row['Department']?.trim();
+      const batch = row['Batch'];
+
+      // Required fields validation
+      if (!email || !email.endsWith('@ves.ac.in')) throw new Error(`Row ${rowNum}: Invalid or missing 'Email ID'`);
+      if (!division) throw new Error(`Row ${rowNum}: Missing 'Division'`);
+      if (!department) throw new Error(`Row ${rowNum}: Missing 'Department'`);
+      if (!batch) throw new Error(`Row ${rowNum}: Missing 'Batch'`);
+
+      const studentData = {
         email_id: email,
-        prn: row['PRN'] || undefined,
-        first_name: row['First Name'] || undefined,
-        middle_name: row['Middle Name'] || undefined,
-        last_name: row['Last Name'] || undefined,
-        mother_name: row['Mother\'s Name'] || undefined,
-        department: row['Department']?.toUpperCase() || undefined,
-        batch_no: row['Batch'] ? parseInt(row['Batch']) : undefined,
-        division: row['Division'] || undefined,
-        gender: row['Gender'] || undefined,
-        abc_id: row['ABC ID'] || undefined,
-        average_sgpi: row['SGPI'] ? parseFloat(row['SGPI']) : undefined,
-        phone: row['Phone'] || undefined,
-        linkedin_url: row['LinkedIn URL'] || undefined,
+        prn: row['PRN'] || null,
+        first_name: row['First Name'] || null,
+        middle_name: row['Middle Name'] || null,
+        last_name: row['Last Name'] || null,
+        mother_name: row["Mother's Name"] || null,
+        department: department.toUpperCase(),
+        batch_no: parseInt(batch),
+        division: division,
+        gender: row['Gender'] || null,
+        abc_id: row['ABC ID'] || null,
+        average_sgpi: row['SGPI'] ? parseFloat(row['SGPI']) : null,
+        phone: row['Phone'] || null,
+        linkedin_url: row['LinkedIn URL'] || null,
         other_urls: row['Other URLs']
           ? row['Other URLs'].split(',').map(url => url.trim())
-          : undefined,
-        last_updated: row['Last Updated'] ? new Date(row['Last Updated']) : new Date()
+          : [],
       };
-    });
 
-    await student_profile.insertMany(validatedData);
-    return { count: validatedData.length };
+      const result = await student_profile.findOneAndUpdate(
+        { email_id: email },
+        studentData,
+        { upsert: true, new: true, }
+      );
+      count++;
+    }
+
+    return { count };
   }
 
   if (type === 'faculty') {
-    const validatedData = jsonData.map(row => {
-      const email = row['Email ID']?.toLowerCase();
-      if (!email || !email.endsWith('@ves.ac.in')) {
-        throw new Error(`Invalid or missing email: ${row['Email ID']}`);
-      }
+    for (let i = 0; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      const rowNum = i + 2;
 
-      return {
+      const email = row['Email ID']?.toLowerCase()?.trim();
+      if (!email || !email.endsWith('@ves.ac.in')) throw new Error(`Row ${rowNum}: Invalid or missing 'Email ID'`);
+
+      const facultyData = {
         email_id: email,
-        name: row['Name'] || undefined,
-        department: row['Department'] || undefined,
-        designation: row['Designation'] || undefined,
-        contact_no: row['Contact Number'] || undefined
+        name: row['Name'] || null,
+        department: row['Department'] || null,
+        designation: row['Designation'] || null,
+        contact_no: row['Contact Number'] || null
       };
-    });
 
-    await faculty_profiles.insertMany(validatedData);
-    return { count: validatedData.length };
+      const result = await faculty_profiles.findOneAndUpdate(
+        { email_id: email },
+        facultyData,
+        { upsert: true, new: true }
+      );
+
+      count++;
+    }
+
+    return { count };
   }
 
   throw new Error('Invalid data type specified');

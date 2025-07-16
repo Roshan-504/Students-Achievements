@@ -51,8 +51,8 @@ const BulkUploadModal = ({ isOpen, onClose, uploadTypeOptions = [] }) => {
     }
 
     // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('File size must be less than 50MB');
       return;
     }
 
@@ -89,7 +89,7 @@ const BulkUploadModal = ({ isOpen, onClose, uploadTypeOptions = [] }) => {
       formData.append('file', selectedFile);
       formData.append('type', selectedUploadType);
 
-      const response = await axiosInstance.post('/admin/bulk-upload', formData, {
+      const response = await axiosInstance.post(`/admin/upload/${selectedUploadType}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

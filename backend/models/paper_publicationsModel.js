@@ -17,5 +17,7 @@ const paperPublicationSchema = new mongoose.Schema({
     timestamps: true // Adds createdAt and updatedAt fields
   });
 
+paperPublicationSchema.index({ email_id: 1 });
+
 const PaperPublication = mongoose.model('PaperPublication', paperPublicationSchema);
 export default PaperPublication;

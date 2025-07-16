@@ -16,5 +16,7 @@ const courseCertificationSchema = new mongoose.Schema({
     timestamps: true // Adds createdAt and updatedAt fields
   });
 
+courseCertificationSchema.index({ email_id: 1 });
+
 const CourseCertification = mongoose.model('CourseCertification', courseCertificationSchema);
 export default CourseCertification;

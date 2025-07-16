@@ -21,5 +21,7 @@ const internshipSchema = new mongoose.Schema({
   timestamps: true // Adds createdAt and updatedAt fields
   });
 
+internshipSchema.index({ email_id: 1 });
+
 const Internship = mongoose.model('Internship', internshipSchema);
 export default Internship;

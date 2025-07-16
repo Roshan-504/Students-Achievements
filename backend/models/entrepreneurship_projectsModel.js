@@ -35,6 +35,7 @@ const entrepreneurshipSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+entrepreneurshipSchema.index({ email_id: 1 });
 
 const Entrepreneurship = mongoose.model('Entrepreneurship', entrepreneurshipSchema);
 export default Entrepreneurship;

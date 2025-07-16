@@ -45,5 +45,7 @@ const volunteeringSchema = new mongoose.Schema({
   timestamps: true, // Auto-add createdAt and updatedAt
 });
 
+volunteeringSchema.index({ email_id: 1 });
+
 const Volunteering = mongoose.model('Volunteering', volunteeringSchema);
 export default Volunteering;

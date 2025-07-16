@@ -23,6 +23,7 @@ const workshopSchema = new mongoose.Schema({
   timestamps: true
 });
 
+workshopSchema.index({ email_id: 1 });
 
 const Workshop = mongoose.model('Workshop', workshopSchema);
 

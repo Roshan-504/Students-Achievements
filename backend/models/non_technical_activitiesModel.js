@@ -18,5 +18,7 @@ const nonTechnicalActivitySchema = new mongoose.Schema({
     timestamps: true // Adds createdAt and updatedAt fields
   });
 
+nonTechnicalActivitySchema.index({ email_id: 1 });
+
 const NonTechnicalActivity = mongoose.model('NonTechnicalActivity', nonTechnicalActivitySchema);
 export default NonTechnicalActivity;

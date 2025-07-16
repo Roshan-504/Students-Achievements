@@ -9,7 +9,7 @@ export const uploadStudents = async (req, res) => {
     const result = await processExcelData(req.file.buffer, 'students');
     res.json({
       success: true,
-      message: `${result.count} students added successfully`
+      message: `students added successfully`
     });
 
   } catch (error) {
@@ -28,7 +28,7 @@ export const uploadFaculty = async (req, res) => {
     const result = await processExcelData(req.file.buffer, 'faculty');
     res.json({
       success: true,
-      message: `${result.count} faculty members added successfully`
+      message: `faculty members added successfully`
     });
 
   } catch (error) {
