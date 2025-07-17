@@ -1,4 +1,5 @@
 import OtherAchievement from '../models/other_achievementsModel.js';
+import student_profile from '../models/student_profileModel.js';
 
 /**
  * @desc    Fetch all other achievements for the logged-in student
@@ -60,6 +61,12 @@ export const uploadOtherAchievement = async (req, res) => {
     };
 
     const newAchievement = await OtherAchievement.create(achievementData);
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
     
     res.status(201).json({
       success: true,

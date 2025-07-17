@@ -1,6 +1,8 @@
+// filterRoutes.js
+
 import express from 'express';
 import mongoose from 'mongoose';
-import student_profile from '../models/student_profileModel.js';
+import PersonalInfo from '../models/student_profileModel.js';
 import Internship from '../models/internshipsModel.js';
 import CourseCertification from '../models/course_certificationsModel.js';
 import Entrepreneurship from '../models/entrepreneurship_projectsModel.js';
@@ -11,10 +13,14 @@ import TechnicalActivity from '../models/technical_activitiesModel.js';
 import Volunteering from '../models/volunteering_experienceModel.js';
 import Workshop from '../models/workshopModel.js';
 import ContactUs from '../models/contact_us.js';
+import Patent from '../models/patentsModel.js'; // Assuming you have a patentsModel.js
+import Featured from '../models/featuredModel.js'; // Assuming you have a featuredModel.js
+
 import { authenticate } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// Define all activity models for easy access
 const activityModels = {
   Internship,
   CourseCertification,
@@ -25,48 +31,101 @@ const activityModels = {
   TechnicalActivity,
   Volunteering,
   Workshop,
+  Patent, // Added Patent model
+  Featured, // Added Featured model
 };
 
-// Route to filter student profiles
+// Helper function to get the relevant date field name for an activity type
+// This is crucial for applying date range filters correctly across different activity schemas.
+const getRelevantDateField = (activityType) => {
+  switch (activityType) {
+    case 'Internship':
+    case 'CourseCertification':
+    case 'Volunteering':
+      return 'start_date'; // These activities typically have a start_date
+    case 'TechnicalActivity':
+    case 'NonTechnicalActivity':
+    case 'Workshop':
+      return 'date'; // These activities typically have a single 'date' field
+    case 'PaperPublication':
+      return 'date_of_publication'; // Specific field for paper publications
+    case 'Patents':
+      return 'application_date'; // Specific field for patents
+    case 'OtherAchievement':
+    case 'Entrepreneurship':
+    case 'Featured':
+      return 'createdAt'; // Fallback to createdAt if no specific date field, or as requested
+    default:
+      return null; // No relevant date field found
+  }
+};
+
+// Route to filter student profiles based on multiple criteria
 router.get('/students', authenticate, async (req, res) => {
   try {
+    // Ensure only faculty can access this route
     if (req.user.role !== 'faculty') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
+    // Extract filter parameters from the query string
     const {
       department,
       batch_no,
-      class_division,
+      class_division, // Frontend uses class_division, maps to 'division' in schema
       sgpi_min,
       sgpi_max,
       gender,
-      email,
+      email, // Refers to student's email_id
       prn,
       page = 1,
       limit = 10,
     } = req.query;
 
+    // Build the MongoDB query object. All conditions are implicitly ANDed.
     const query = {};
-    if (department) query.department = { $in: department.split(',') };
-    if (batch_no) query.batch_no = Number(batch_no);
-    if (class_division) query.class_division = class_division;
-    if (sgpi_min || sgpi_max) {
-      query.current_sgpi = {};
-      if (sgpi_min) query.current_sgpi.$gte = Number(sgpi_min);
-      if (sgpi_max) query.current_sgpi.$lte = Number(sgpi_max);
-    }
-    if (gender) query.gender = gender;
-    if (email) query.email_id = { $regex: email, $options: 'i' };
-    if (prn) query.prn = { $regex: prn, $options: 'i' };
 
-    const students = await student_profile.find(query)
+    // Department filter: allows selecting multiple departments using $in operator
+    if (department) {
+      query.department = { $in: department.split(',') };
+    }
+    // Batch number filter: ensures the value is treated as a number
+    if (batch_no) {
+      query.batch_no = Number(batch_no);
+    }
+    // Class division filter: maps to the 'division' field in the schema
+    if (class_division) {
+      query.division = class_division;
+    }
+    // SGPI range filter: applies greater than or equal to ($gte) and less than or equal to ($lte)
+    if (sgpi_min || sgpi_max) {
+      query.average_sgpi = {}; // Use average_sgpi as per your schema
+      if (sgpi_min) query.average_sgpi.$gte = Number(sgpi_min);
+      if (sgpi_max) query.average_sgpi.$lte = Number(sgpi_max);
+    }
+    // Gender filter
+    if (gender) {
+      query.gender = gender;
+    }
+    // Email filter: uses regex for partial, case-insensitive matching on email_id
+    if (email) {
+      query.email_id = { $regex: email, $options: 'i' };
+    }
+    // PRN filter: uses regex for partial, case-insensitive matching on prn
+    if (prn) {
+      query.prn = { $regex: prn, $options: 'i' };
+    }
+
+    // Fetch student profiles based on the constructed query, with pagination and selection
+    const students = await PersonalInfo.find(query)
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .select('email_id prn first_name last_name department batch_no class_division current_sgpi gender');
+      .select('email_id prn first_name last_name department batch_no division average_sgpi gender');
 
-    const total = await student_profile.countDocuments(query);
+    // Get the total count of documents matching the query for pagination
+    const total = await PersonalInfo.countDocuments(query);
 
+    // Send the filtered students and pagination info as a JSON response
     res.json({
       students,
       total,
@@ -79,17 +138,18 @@ router.get('/students', authenticate, async (req, res) => {
   }
 });
 
-
-
+// Route to filter activities based on activity type, student email, status, and date range
 router.get('/activities', authenticate, async (req, res) => {
   try {
+    // Ensure only faculty can access this route
     if (req.user.role !== 'faculty') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
+    // Extract filter parameters from the query string
     const {
       activity_type,
-      email_id,
+      email_id, // This will be a comma-separated string of emails from student filters
       status,
       start_date,
       end_date,
@@ -97,40 +157,36 @@ router.get('/activities', authenticate, async (req, res) => {
       limit = 10,
     } = req.query;
 
-    // Build base query
-    const query = {};
-    if (email_id) query.email_id = { $in: email_id.split(',') };
-
-    // Status filtering - fixed $exists usage
-    if (status) {
-      if (status === 'pending') {
-        query.$or = [
-          { 'proof.fileName': null }, // Changed from $exists: false
-          { end_date: null }
-        ];
-      } else if (status === 'completed') {
-        query['proof.fileName'] = { $ne: null }; // Changed from $exists: true
-        query.end_date = { $ne: null };
-      }
+    // Base query for activities, primarily for filtering by student email_id
+    const baseMatchQuery = {};
+    if (email_id) {
+      // If email_id is provided (e.g., from student filters), use $in operator
+      // If email_id is an empty string (e.g., no students matched student filters),
+      // email_id.split(',') will be [''], and $in: [''] will match no documents,
+      // effectively filtering out all activities, which is the desired behavior.
+      baseMatchQuery.email_id = { $in: email_id.split(',') };
     }
 
-    // Date range filtering
-    if (start_date || end_date) {
-      query.$or = [];
-      if (start_date) {
-        query.$or.push(
-          { start_date: { $gte: new Date(start_date) } },
-          { date: { $gte: new Date(start_date) } },
-          { date_of_publication: { $gte: new Date(start_date) } }
-        );
-      }
-      if (end_date) {
-        query.$or.push(
-          { end_date: { $lte: new Date(end_date) } },
-          { date: { $lte: new Date(end_date) } },
-          { date_of_publication: { $lte: new Date(end_date) } }
-        );
-      }
+    // Status filtering logic: 'completed' requires proof and potentially end_date, 'pending' otherwise
+    const statusMatch = {};
+    if (status === 'pending') {
+      statusMatch.$or = [
+        { 'proof.fileName': { $eq: null } }, // Proof is missing
+        // For activities like internships/course certifications, consider pending if end_date is also missing
+        { activity_type: { $in: ['Internship', 'CourseCertification'] }, end_date: { $eq: null } }
+      ];
+    } else if (status === 'completed') {
+      statusMatch['proof.fileName'] = { $ne: null }; // Proof must exist
+      statusMatch.$or = [
+        { activity_type: { $nin: ['Internship', 'CourseCertification'] } }, // Not internship/course, so proof is enough
+        { activity_type: { $in: ['Internship', 'CourseCertification'] }, end_date: { $ne: null } } // Internship/course needs end_date
+      ];
+    }
+
+    // Combine base query with status filter using $and if status filter is active
+    const combinedMatchQuery = { ...baseMatchQuery };
+    if (Object.keys(statusMatch).length > 0) {
+        combinedMatchQuery.$and = (combinedMatchQuery.$and || []).concat(statusMatch);
     }
 
     let activities = [];
@@ -139,171 +195,149 @@ router.get('/activities', authenticate, async (req, res) => {
     let total_pending = 0;
     let unique_students_count = 0;
 
+    // Handle 'All' activity types separately to aggregate data from all models
     if (activity_type === 'All') {
-      // Main pipeline for all activity types
-      const basePipeline = [
-        { $match: query },
-        { 
-          $addFields: { 
-            activity_type: 'Internship',
-            sort_date: {
-              $ifNull: [
-                '$start_date',
-                { $ifNull: [
-                  '$date',
-                  { $ifNull: [
-                    '$date_of_publication',
-                    '$createdAt'
-                  ]}
-                ]}
-              ]
-            }
-          } 
-        },
-        { $project: { 'proof.data': 0 } }
-      ];
+      let allFilteredActivities = [];
+      let uniqueEmails = new Set();
+      let completedCount = 0;
+      let pendingCount = 0;
 
-      // Create union pipelines for other activity types
-      const unionPipelines = Object.keys(activityModels)
-        .filter(type => type !== 'Internship')
-        .map(type => ({
-          $unionWith: {
-            coll: activityModels[type].collection.name,
-            pipeline: [
-              { $match: query },
-              { $addFields: { activity_type: type } },
-              { 
-                $addFields: {
-                  sort_date: {
-                    $ifNull: [
-                      '$start_date',
-                      { $ifNull: [
-                        '$date',
-                        { $ifNull: [
-                          '$date_of_publication',
-                          '$createdAt'
-                        ]}
-                      ]}
-                    ]
-                  }
-                }
-              },
-              { $project: { 'proof.data': 0 } }
-            ]
+      // Iterate through all defined activity models
+      for (const type of Object.keys(activityModels)) {
+        const Model = activityModels[type];
+        if (!Model) continue; // Skip if model is not defined
+
+        const modelQuery = { ...baseMatchQuery }; // Start with baseMatchQuery (including email_id filter)
+        const specificDateField = getRelevantDateField(type);
+
+        // Apply date range filter to the specific date field for the current model
+        if (specificDateField && (start_date || end_date)) {
+          const dateFilter = {};
+          if (start_date) dateFilter.$gte = new Date(start_date);
+          if (end_date) {
+            const endOfDay = new Date(end_date);
+            endOfDay.setHours(23, 59, 59, 999); // Set to end of the day for inclusive range
+            dateFilter.$lte = endOfDay;
           }
-        }));
-
-      // Full pipeline with pagination and sorting
-      const fullPipeline = [
-        ...basePipeline,
-        ...unionPipelines,
-        { $sort: { sort_date: -1 } }, // Newest first
-        { $skip: (Number(page) - 1) * Number(limit) },
-        { $limit: Number(limit) }
-      ];
-
-      // Count pipeline for total documents
-      const countPipeline = [
-        ...basePipeline,
-        ...unionPipelines,
-        { $count: 'total' }
-      ];
-
-      // Stats pipeline for counts
-      const statsPipeline = [
-        ...basePipeline,
-        ...unionPipelines,
-        {
-          $facet: {
-            status_counts: [
-              { 
-                $addFields: {
-                  is_completed: {
-                    $and: [
-                      { $ne: ['$proof.fileName', null] },
-                      { $ne: ['$end_date', null] }
-                    ]
-                  }
-                }
-              },
-              {
-                $group: {
-                  _id: null,
-                  total_completed: { $sum: { $cond: ['$is_completed', 1, 0] } },
-                  total_pending: { $sum: { $cond: ['$is_completed', 0, 1] } }
-                }
-              }
-            ],
-            unique_students: [
-              { $group: { _id: '$email_id' } },
-              { $count: 'total' }
-            ]
-          }
+          modelQuery[specificDateField] = dateFilter;
         }
-      ];
+        
+        // Fetch activities for the current model, excluding binary proof data
+        const currentActivities = await Model.find(modelQuery).select('-proof.data').lean().exec();
+        
+        // Process each activity to determine its status and collect unique emails
+        currentActivities.forEach(activity => {
+          const hasProof = activity.proof?.fileName;
+          // Determine if end_date is required for completion for this activity type
+          const needsEndDateForCompletion = ['Internship', 'CourseCertification'].includes(type);
+          const hasValidEndDate = activity.end_date !== null && activity.end_date !== undefined;
 
-      // Execute all pipelines
-      const [activitiesResult, countResult, statsResult] = await Promise.all([
-        Internship.aggregate(fullPipeline),
-        Internship.aggregate(countPipeline),
-        Internship.aggregate(statsPipeline)
-      ]);
+          // Calculate activity status
+          const activityStatus = (hasProof && (!needsEndDateForCompletion || hasValidEndDate)) ? 'Completed' : 'Pending';
+          
+          // Apply the status filter for 'All' activities at this stage
+          if (status) {
+            if (status === 'completed' && activityStatus !== 'Completed') return;
+            if (status === 'pending' && activityStatus !== 'Pending') return;
+          }
 
-      activities = activitiesResult;
-      total = countResult.length > 0 ? countResult[0].total : 0;
-      total_completed = statsResult[0]?.status_counts[0]?.total_completed || 0;
-      total_pending = statsResult[0]?.status_counts[0]?.total_pending || 0;
-      unique_students_count = statsResult[0]?.unique_students[0]?.total || 0;
+          // Increment counts based on filtered status
+          if (activityStatus === 'Completed') {
+            completedCount++;
+          } else {
+            pendingCount++;
+          }
+          uniqueEmails.add(activity.email_id); // Add student email to set for unique count
+          allFilteredActivities.push({ ...activity, activity_type: type, status: activityStatus });
+        });
+      }
 
-    } else {
-      // Single activity type handling
-      const Model = activityModels[activity_type];
-      if (!Model) return res.status(400).json({ message: 'Invalid activity type' });
+      // Sort all collected activities by their relevant date (newest first)
+      allFilteredActivities.sort((a, b) => {
+        const dateA = new Date(a.start_date || a.date || a.date_of_publication || a.application_date || a.createdAt);
+        const dateB = new Date(b.start_date || b.date || b.date_of_publication || b.application_date || b.createdAt);
+        return dateB.getTime() - dateA.getTime();
+      });
 
-      // Get paginated results sorted by date (newest first)
-      activities = await Model.find(query)
-        .sort({ 
-          start_date: -1, 
-          date: -1, 
-          date_of_publication: -1,
-          createdAt: -1 
-        })
-        .skip((Number(page) - 1) * Number(limit))
-        .limit(Number(limit))
-        .select('-proof.data')
-        .lean()
-        .exec();
-
-      // Get counts and stats
-      const [totalCount, completedCount, pendingCount, uniqueStudents] = await Promise.all([
-        Model.countDocuments(query),
-        Model.countDocuments({ ...query, 'proof.fileName': { $ne: null }, end_date: { $ne: null } }),
-        Model.countDocuments({
-          $or: [
-            { ...query, 'proof.fileName': null },
-            { ...query, end_date: null }
-          ]
-        }),
-        Model.distinct('email_id', query)
-      ]);
-
-      activities = activities.map(a => ({ ...a, activity_type }));
-      total = totalCount;
+      // Update total counts and unique students count
+      total = allFilteredActivities.length;
       total_completed = completedCount;
       total_pending = pendingCount;
-      unique_students_count = uniqueStudents.length;
+      unique_students_count = uniqueEmails.size;
+
+      // Apply pagination to the combined and sorted activities
+      activities = allFilteredActivities.slice((Number(page) - 1) * Number(limit), Number(page) * Number(limit));
+
+    } else {
+      // Handle single activity type filtering
+      const Model = activityModels[activity_type];
+      if (!Model) {
+        return res.status(400).json({ message: 'Invalid activity type' });
+      }
+
+      const modelQuery = { ...combinedMatchQuery }; // Start with combinedMatchQuery (includes email_id and status)
+      const specificDateField = getRelevantDateField(activity_type);
+
+      // Apply date range filter to the specific date field for the selected model
+      if (specificDateField && (start_date || end_date)) {
+        const dateFilter = {};
+        if (start_date) dateFilter.$gte = new Date(start_date);
+        if (end_date) {
+            const endOfDay = new Date(end_date);
+            endOfDay.setHours(23, 59, 59, 999);
+            dateFilter.$lte = endOfDay;
+        }
+        modelQuery[specificDateField] = dateFilter;
+      }
+      
+      // Fetch total count, paginated activities, and unique emails for the single activity type
+      const [totalCount, modelActivities, uniqueEmailsArray] = await Promise.all([
+        Model.countDocuments(modelQuery),
+        Model.find(modelQuery)
+          .sort({ 
+            start_date: -1, // Sort by relevant date fields in descending order
+            date: -1, 
+            date_of_publication: -1,
+            application_date: -1,
+            createdAt: -1 
+          })
+          .skip((Number(page) - 1) * Number(limit))
+          .limit(Number(limit))
+          .select('-proof.data') // Exclude binary proof data
+          .lean()
+          .exec(),
+        Model.distinct('email_id', modelQuery) // Get unique emails for the current filtered set
+      ]);
+
+      // Map activities to include activity_type and calculated status for display
+      activities = modelActivities.map(a => {
+        const hasProof = a.proof?.fileName;
+        const needsEndDateForCompletion = ['Internship', 'CourseCertification'].includes(activity_type);
+        const hasValidEndDate = a.end_date !== null && a.end_date !== undefined;
+        const currentStatus = (hasProof && (!needsEndDateForCompletion || hasValidEndDate)) ? 'Completed' : 'Pending';
+        return { ...a, activity_type, status: currentStatus };
+      });
+
+      total = totalCount;
+      unique_students_count = uniqueEmailsArray.length;
+
+      // Calculate completed and pending for single activity type by fetching all filtered data (efficiently)
+      const allFilteredActivitiesForCounts = await Model.find(modelQuery).select('proof end_date').lean().exec();
+      allFilteredActivitiesForCounts.forEach(activity => {
+        const hasProof = activity.proof?.fileName;
+        const needsEndDateForCompletion = ['Internship', 'CourseCertification'].includes(activity_type);
+        const hasValidEndDate = activity.end_date !== null && activity.end_date !== undefined;
+        if (hasProof && (!needsEndDateForCompletion || hasValidEndDate)) {
+          total_completed++;
+        } else {
+          total_pending++;
+        }
+      });
     }
 
-    // Add status field to each activity
-    const finalActivities = activities.map((a) => {
-      const hasProof = a.proof?.fileName;
-      const hasValidEndDate = a.end_date !== null && a.end_date !== undefined;
-      const status = hasProof && hasValidEndDate ? 'Completed' : 'Pending';
-      return { ...a, status };
-    });
-
+    // Send response with paginated activities and all calculated counts
     res.json({
-      activities: finalActivities,
+      activities: activities,
       total,
       page: Number(page),
       pages: Math.ceil(total / Number(limit)),
@@ -318,22 +352,28 @@ router.get('/activities', authenticate, async (req, res) => {
   }
 });
 
-// Route to download proof
+// Route to download proof file for a specific activity
 router.get('/activities/proof/:id', authenticate, async (req, res) => {
   try {
+    // Ensure only faculty can access this route
     if (req.user.role !== 'faculty') {
       return res.status(403).json({ message: 'Unauthorized' });
     }
+    // Get activity type from query to select the correct model
     const { activity_type } = req.query;
     if (!activity_type || !activityModels[activity_type]) {
       return res.status(400).json({ message: 'Invalid activity type' });
     }
+    // Find the activity by ID
     const activity = await activityModels[activity_type].findById(req.params.id);
+    // Check if activity and its proof data exist
     if (!activity || !activity.proof?.data) {
       return res.status(404).json({ message: 'Proof not found' });
     }
+    // Set response headers for file download
     res.set('Content-Type', activity.proof.contentType);
     res.set('Content-Disposition', `attachment; filename="${activity.proof.fileName}"`);
+    // Send the binary proof data
     res.send(activity.proof.data);
   } catch (error) {
     console.error('Error downloading proof:', error);
@@ -341,7 +381,7 @@ router.get('/activities/proof/:id', authenticate, async (req, res) => {
   }
 });
 
-// New route to download all filtered activities as CSV
+// Route to download all filtered activities as CSV or multi-tab Excel
 router.get('/activities/download', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'faculty') {
@@ -350,111 +390,111 @@ router.get('/activities/download', authenticate, async (req, res) => {
 
     const { activity_type, email_id, status, start_date, end_date } = req.query;
 
-    const query = {};
-    if (email_id) query.email_id = { $in: email_id.split(',') };
-    if (status) {
-      if (status === 'pending') {
-        query.$or = [{ 'proof.fileName': { $exists: false } }, { end_date: null }];
-      } else if (status === 'completed') {
-        query['proof.fileName'] = { $exists: true };
-        query.end_date = { $ne: null };
-      }
-    }
-    if (start_date || end_date) {
-      query.$or = [];
-      if (start_date) {
-        query.$or.push(
-          { start_date: { $gte: new Date(start_date) } },
-          { date: { $gte: new Date(start_date) } },
-          { date_of_publication: { $gte: new Date(start_date) } }
-        );
-      }
-      if (end_date) {
-        query.$or.push(
-          { end_date: { $lte: new Date(end_date) } },
-          { date: { $lte: new Date(end_date) } },
-          { date_of_publication: { $lte: new Date(end_date) } }
-        );
-      }
-    }
+    const baseMatchQuery = {};
+    if (email_id) baseMatchQuery.email_id = { $in: email_id.split(',') };
 
-    let activities = [];
+    const statusMatch = {};
+    if (status === 'pending') {
+      statusMatch.$or = [
+        { 'proof.fileName': { $eq: null } },
+        { 'end_date': { $eq: null } }
+      ];
+    } else if (status === 'completed') {
+      statusMatch['proof.fileName'] = { $ne: null };
+      statusMatch.end_date = { $ne: null };
+    }
+    const combinedMatchQuery = { ...baseMatchQuery, ...statusMatch };
 
     if (activity_type === 'All') {
-      const pipeline = [
-        { $match: query },
-        { $addFields: { activity_type: 'Internship' } },
-        {
-          $addFields: {
-            sort_date: {
-              $ifNull: ['$start_date', { $ifNull: ['$date', '$date_of_publication'] }],
-            },
-            status: {
-              $cond: {
-                if: { $and: [{ $ifNull: ['$proof.fileName', false] }, { $ne: ['$end_date', null] }] },
-                then: 'Completed',
-                else: 'Pending',
-              },
-            },
-          },
-        },
-        { $project: { 'proof.data': 0 } },
-      ];
+      const allData = {};
+      // Fetch data for each activity type
+      for (const type of Object.keys(activityModels)) {
+        const Model = activityModels[type];
+        if (!Model) continue;
 
-      const unionPipelines = Object.keys(activityModels)
-        .filter((type) => type !== 'Internship')
-        .map((type) => ({
-          $unionWith: {
-            coll: activityModels[type].collection.name,
-            pipeline: [
-              { $match: query },
-              { $addFields: { activity_type: type } },
-              {
-                $addFields: {
-                  sort_date: {
-                    $ifNull: ['$start_date', { $ifNull: ['$date', '$date_of_publication'] }],
-                  },
-                  status: {
-                    $cond: {
-                      if: { $and: [{ $ifNull: ['$proof.fileName', false] }, { $ne: ['$end_date', null] }] },
-                      then: 'Completed',
-                      else: 'Pending',
-                    },
-                  },
-                },
-              },
-              { $project: { 'proof.data': 0 } },
-            ],
-          },
+        const modelQuery = { ...combinedMatchQuery };
+        const specificDateField = getRelevantDateField(type);
+
+        if (specificDateField && (start_date || end_date)) {
+          const dateFilter = {};
+          if (start_date) dateFilter.$gte = new Date(start_date);
+          if (end_date) dateFilter.$lte = new Date(end_date);
+          modelQuery[specificDateField] = dateFilter;
+        }
+
+        const activitiesForType = await Model.find(modelQuery)
+          .select('-proof.data') // Exclude binary proof data
+          .lean()
+          .exec();
+        
+        // Map activities to include activity_type, calculated status, and formatted dates
+        allData[type] = activitiesForType.map(activity => ({
+          ...activity,
+          activity_type: type,
+          status: activity.proof?.fileName && activity.end_date ? 'Completed' : 'Pending',
+          // Format dates for consistency in export
+          start_date: activity.start_date ? new Date(activity.start_date).toLocaleDateString() : '',
+          end_date: activity.end_date ? new Date(activity.end_date).toLocaleDateString() : '',
+          date: activity.date ? new Date(activity.date).toLocaleDateString() : '',
+          date_of_publication: activity.date_of_publication ? new Date(activity.date_of_publication).toLocaleDateString() : '',
+          application_date: activity.application_date ? new Date(activity.application_date).toLocaleDateString() : '',
+          createdAt: activity.createdAt ? new Date(activity.createdAt).toLocaleDateString() : '',
+          updatedAt: activity.updatedAt ? new Date(activity.updatedAt).toLocaleDateString() : '',
         }));
-
-      const fullPipeline = [
-        ...pipeline,
-        ...unionPipelines,
-        { $sort: { sort_date: 1 } },
-      ];
-
-      activities = await Internship.aggregate(fullPipeline);
+      }
+      res.json(allData); // Send a JSON object with data for each tab
     } else {
+      // Handle single activity type CSV export
       const Model = activityModels[activity_type];
       if (!Model) {
         return res.status(400).json({ message: 'Invalid activity type' });
       }
 
-      activities = await Model.find(query)
-        .sort({ start_date: 1, date: 1, date_of_publication: 1 })
+      const modelQuery = { ...combinedMatchQuery };
+      const specificDateField = getRelevantDateField(activity_type);
+
+      if (specificDateField && (start_date || end_date)) {
+        const dateFilter = {};
+        if (start_date) dateFilter.$gte = new Date(start_date);
+        if (end_date) dateFilter.$lte = new Date(end_date);
+        modelQuery[specificDateField] = dateFilter;
+      }
+
+      const activities = await Model.find(modelQuery)
+        .sort({ start_date: 1, date: 1, date_of_publication: 1, application_date: 1 })
         .select('-proof.data')
         .lean()
         .exec();
-      activities = activities.map((activity) => ({
+      
+      const finalActivities = activities.map((activity) => ({
         ...activity,
         activity_type,
         status: activity.proof?.fileName && activity.end_date ? 'Completed' : 'Pending',
-        sort_date: activity.start_date || activity.date || activity.date_of_publication,
+        // Format dates for consistency in export
+        start_date: activity.start_date ? new Date(activity.start_date).toLocaleDateString() : '',
+        end_date: activity.end_date ? new Date(activity.end_date).toLocaleDateString() : '',
+        date: activity.date ? new Date(activity.date).toLocaleDateString() : '',
+        date_of_publication: activity.date_of_publication ? new Date(activity.date_of_publication).toLocaleDateString() : '',
+        application_date: activity.application_date ? new Date(activity.application_date).toLocaleDateString() : '',
+        createdAt: activity.createdAt ? new Date(activity.createdAt).toLocaleDateString() : '',
+        updatedAt: activity.updatedAt ? new Date(activity.updatedAt).toLocaleDateString() : '',
       }));
-    }
 
-    res.json({ activities });
+      // Convert data to CSV format
+      const fields = Object.keys(finalActivities[0] || {}); // Get all keys from the first object
+      const replacer = (key, value) => (value === null ? '' : value); // Handle null values for CSV
+      let csv = finalActivities.map((row) =>
+        fields
+          .map((fieldName) => JSON.stringify(row[fieldName], replacer))
+          .join(',')
+      );
+      csv.unshift(fields.join(',')); // Add header row
+      csv = csv.join('\r\n');
+
+      res.header('Content-Type', 'text/csv');
+      res.attachment(`${activity_type}_activities.csv`);
+      res.send(csv);
+    }
   } catch (error) {
     console.error('Error downloading activities:', error);
     res.status(500).json({ message: 'Server error' });
@@ -462,7 +502,7 @@ router.get('/activities/download', authenticate, async (req, res) => {
 });
 
 
-// Route to filter ContactUs submissions
+// Route to filter ContactUs submissions (no changes needed as per request)
 router.get('/contacts', authenticate, async (req, res) => {
   try {
     if (req.user.role !== 'faculty') {

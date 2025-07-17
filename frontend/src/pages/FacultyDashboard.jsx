@@ -1,3 +1,5 @@
+// FacultyDashboard.jsx
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Eye, Download, LogOut, X, FileText } from 'lucide-react';
@@ -5,15 +7,35 @@ import axiosInstance from '../services/axiosInstance';
 import { useAuthStore } from '../context/authStore';
 import FilterPanel from '../components/FilterPanel';
 
+// Import XLSX from CDN for client-side Excel generation
+// This script will be loaded in the browser environment.
+const loadXLSXScript = () => {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
 const FacultyDashboard = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [data, setData] = useState([]);
   const [imgError, setImgError] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalActivitys, setTotalActivitys] = useState(0);
+  const [totalActivities, setTotalActivities] = useState(0); // Renamed for clarity
+  const [totalCompletedActivities, setTotalCompletedActivities] = useState(0); // New state for completed activities
+  const [totalPendingActivities, setTotalPendingActivities] = useState(0); // New state for pending activities
+  const [totalUniqueStudents, setTotalUniqueStudents] = useState(0); // New state for unique students
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false); // New state for export loading
   const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [filters, setFilters] = useState({
@@ -21,33 +43,55 @@ const FacultyDashboard = () => {
     activities: { activity_type: 'All', status: '', start_date: '', end_date: '' },
   });
 
+  // Function to fetch activity data from the backend based on current filters and page
   const fetchData = async (page = 1) => {
     setLoading(true);
     try {
       let url = `/api/faculty/activities?page=${page}&limit=10`;
       const { activity_type, status, start_date, end_date } = filters.activities;
       const studentFilters = filters.students;
+
+      // Append activity filters to URL
       if (activity_type) url += `&activity_type=${encodeURIComponent(activity_type)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
       if (start_date) url += `&start_date=${encodeURIComponent(start_date)}`;
       if (end_date) url += `&end_date=${encodeURIComponent(end_date)}`;
-      if (studentFilters.email) url += `&email_id=${encodeURIComponent(studentFilters.email)}`;
-      if (studentFilters.department.length > 0 || studentFilters.batch_no || studentFilters.class_division || studentFilters.gender) {
-        const studentEmails = await fetchStudentEmails(studentFilters);
-        if (studentEmails.length > 0) {
-          url += `&email_id=${encodeURIComponent(studentEmails.join(','))}`;
-        }
+      
+      let studentEmailsToFilter = [];
+      // Check if any student filter is actively applied
+      const isStudentFilterApplied = Object.values(studentFilters).some(filterVal => 
+        (Array.isArray(filterVal) && filterVal.length > 0) || 
+        (typeof filterVal === 'string' && filterVal !== '') ||
+        (typeof filterVal === 'number' && filterVal !== 0) // For batch_no if it's a number and not 0
+      );
+
+      // If student filters are applied, fetch the matching student emails first
+      if (isStudentFilterApplied) {
+        studentEmailsToFilter = await fetchStudentEmails(studentFilters);
+        // If student filters are applied but no emails are found,
+        // pass an empty string for email_id. The backend's `$in: ['']` will
+        // correctly result in no activities being returned.
+        url += `&email_id=${encodeURIComponent(studentEmailsToFilter.join(','))}`;
       }
 
       const response = await axiosInstance.get(url);
-      console.log(response.data)
+      
+      // Update state with fetched data and counts
       setData(response.data.activities || []);
-      setTotalActivitys(response.data.total)
+      setTotalActivities(response.data.total || 0);
+      setTotalCompletedActivities(response.data.total_completed || 0);
+      setTotalPendingActivities(response.data.total_pending || 0);
+      setTotalUniqueStudents(response.data.total_unique_students || 0);
       setTotalPages(response.data.pages || 1);
       setCurrentPage(Number(response.data.page) || 1);
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Reset data and counts on error
       setData([]);
+      setTotalActivities(0);
+      setTotalCompletedActivities(0);
+      setTotalPendingActivities(0);
+      setTotalUniqueStudents(0);
       setTotalPages(1);
       setCurrentPage(1);
     } finally {
@@ -55,52 +99,59 @@ const FacultyDashboard = () => {
     }
   };
 
+  // Function to fetch student emails based on student filters
+  // This is used to first filter students, then use their emails to filter activities.
   const fetchStudentEmails = async (studentFilters) => {
     try {
       let url = '/api/faculty/students?';
-      const { department, batch_no, class_division, gender, email } = studentFilters;
+      const { department, batch_no, class_division, gender, email, prn } = studentFilters;
+
+      // Append all active student filters to the URL for the student endpoint
       if (department.length > 0) url += `&department=${encodeURIComponent(department.join(','))}`;
       if (batch_no) url += `&batch_no=${encodeURIComponent(batch_no)}`;
       if (class_division) url += `&class_division=${encodeURIComponent(class_division)}`;
       if (gender) url += `&gender=${encodeURIComponent(gender)}`;
       if (email) url += `&email=${encodeURIComponent(email)}`;
+      if (prn) url += `&prn=${encodeURIComponent(prn)}`;
 
       const response = await axiosInstance.get(url);
+      // Return an array of email_ids from the filtered students
       return response.data.students.map((student) => student.email_id);
     } catch (error) {
       console.error('Error fetching student emails:', error);
-      return [];
+      return []; // Return empty array on error
     }
   };
 
+  // Fetch data on initial component mount and whenever filters change
   useEffect(() => {
     fetchData(1);
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
+  // Apply filters and reset pagination/sorting
   const applyFilters = () => {
-    setCurrentPage(1);
-    setSortConfig({ key: '', direction: 'asc' });
-    fetchData(1);
+    setCurrentPage(1); // Reset to first page
+    setSortConfig({ key: '', direction: 'asc' }); // Reset sorting
+    fetchData(1); // Fetch data with new filters
   };
 
+  // Reset all filters and refetch data
   const resetFilters = () => {
     setFilters({
       students: { department: [], batch_no: '', class_division: '', gender: '', email: '' },
       activities: { activity_type: 'All', status: '', start_date: '', end_date: '' },
     });
-    setCurrentPage(1);
-    setSortConfig({ key: '', direction: 'asc' });
-    fetchData(1);
+    setCurrentPage(1); // Reset to first page
+    setSortConfig({ key: '', direction: 'asc' }); // Reset sorting
+    fetchData(1); // Fetch data with reset filters
   };
 
+  // Handle sorting of table data
   const handleSort = (key) => {
-  // Determine new sort direction
     const newDirection = sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
     
     setSortConfig({ key, direction: newDirection });
-      // Create sorted copy of data
       const sortedData = [...data].sort((a, b) => {
-        // Get values to compare
         let aValue, bValue;
 
         switch (key) {
@@ -117,75 +168,194 @@ const FacultyDashboard = () => {
             bValue = b.status || "";
             break;
           case 'date':
-            aValue = new Date(a.start_date || a.date || a.date_of_publication).getTime();
-            bValue = new Date(b.start_date || b.date || b.date_of_publication).getTime();
+            // Prioritize specific date fields, then fallback to createdAt for sorting
+            const dateA = new Date(a.start_date || a.date || a.date_of_publication || a.application_date || a.createdAt);
+            const dateB = new Date(b.start_date || b.date || b.date_of_publication || b.application_date || b.createdAt);
+            aValue = dateA.getTime();
+            bValue = dateB.getTime();
             break;
           default:
             aValue = '';
             bValue = '';
         }
 
-        // Handle null/undefined/empty values
+        // Handle null/undefined values for sorting
         if (!aValue && !bValue) return 0;
         if (!aValue) return newDirection === 'asc' ? -1 : 1;
         if (!bValue) return newDirection === 'asc' ? 1 : -1;
 
-        // Normalize values for comparison
+        // Case-insensitive string comparison
         if (typeof aValue === 'string') aValue = aValue.toLowerCase();
         if (typeof bValue === 'string') bValue = bValue.toLowerCase();
 
-        // Perform comparison
+        // Actual comparison logic
         if (aValue < bValue) return newDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return newDirection === 'asc' ? 1 : -1;
-        return 0;
+        return 0; // Values are equal
       });
 
-      setData(sortedData);
+      setData(sortedData); // Update table data with sorted array
     };
 
+  // Handle viewing activity details in a modal
   const handleViewDetails = (row) => {
     setSelectedActivity(row);
   };
 
+  // Handle downloading proof file
   const handleDownloadProof = async (row) => {
-    if (!row.proof?.fileName) return;
+    if (!row.proof?.fileName) return; // Do nothing if no proof file
     try {
+      // Make a GET request to the backend to download the proof
       const response = await axiosInstance.get(`/api/faculty/activities/proof/${row._id}?activity_type=${row.activity_type}`, {
-        responseType: 'blob',
+        responseType: 'blob', // Important for handling binary file data
       });
+      // Create a URL for the blob and trigger download
       const url = window.URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', row.proof.fileName);
+      link.setAttribute('download', row.proof.fileName); // Set download filename
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      window.URL.revokeObjectURL(url); // Clean up the URL object
     } catch (error) {
       console.error('Error downloading proof:', error);
+      // Optionally show a user-friendly message to the user
     }
   };
 
+  // Handle export to CSV (single activity type) or multi-tab Excel (all activity types)
+  const handleExport = async () => {
+    setExporting(true); // Set exporting state to true to show loading indicator
+    try {
+      const { activity_type, status, start_date, end_date } = filters.activities;
+      const studentFilters = filters.students;
+
+      let url = `/api/faculty/activities/download?`;
+      if (activity_type) url += `activity_type=${encodeURIComponent(activity_type)}`;
+      if (status) url += `&status=${encodeURIComponent(status)}`;
+      if (start_date) url += `&start_date=${encodeURIComponent(start_date)}`;
+      if (end_date) url += `&end_date=${encodeURIComponent(end_date)}`;
+
+      let studentEmailsToFilter = [];
+      const isStudentFilterApplied = Object.values(studentFilters).some(filterVal => 
+        (Array.isArray(filterVal) && filterVal.length > 0) || 
+        (typeof filterVal === 'string' && filterVal !== '') ||
+        (typeof filterVal === 'number' && filterVal !== 0)
+      );
+
+      if (isStudentFilterApplied) {
+        studentEmailsToFilter = await fetchStudentEmails(studentFilters);
+        // If student filters are applied but no emails are found,
+        // pass an empty string for email_id. The backend's `$in: ['']` will
+        // correctly result in no activities being returned for export.
+        url += `&email_id=${encodeURIComponent(studentEmailsToFilter.join(','))}`;
+
+        // Special handling: if student filters are applied and no students match,
+        // export an empty file immediately without hitting the backend for activities.
+        if (studentEmailsToFilter.length === 0) {
+            if (activity_type === 'All') {
+                await loadXLSXScript();
+                const wb = XLSX.utils.book_new();
+                // Define all possible sheet names for the multi-tab Excel
+                const sheetNames = [
+                    'Internship', 'CourseCertification', 'Entrepreneurship', 
+                    'NonTechnicalActivity', 'OtherAchievement', 'PaperPublication', 
+                    'TechnicalActivity', 'Volunteering', 'Workshop', 'Patents', 'Featured'
+                ];
+                sheetNames.forEach(sheetName => {
+                    // Add an empty sheet for each activity type
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([]), sheetName);
+                });
+                XLSX.writeFile(wb, 'All_Activities_Empty.xlsx'); // Save empty Excel file
+            } else {
+                const csvContent = "Student Email,Activity Type,Title,Status,Date\n"; // Headers only for CSV
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `${activity_type}_activities_empty.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
+            setExporting(false); // Stop loading
+            return; // Exit function
+        }
+      }
+
+      // Make the request to the backend for download data
+      const response = await axiosInstance.get(url, { responseType: activity_type === 'All' ? 'json' : 'blob' });
+
+      // Handle multi-tab Excel export if activity_type is 'All'
+      if (activity_type === 'All') {
+        await loadXLSXScript(); // Ensure XLSX library is loaded
+        const wb = XLSX.utils.book_new(); // Create a new workbook
+
+        // Define the order and names of sheets for the Excel file
+        const sheetOrder = [
+          'Internship', 'CourseCertification', 'Entrepreneurship', 
+          'NonTechnicalActivity', 'OtherAchievement', 'PaperPublication', 
+          'TechnicalActivity', 'Volunteering', 'Workshop', 'Patents', 'Featured'
+        ];
+
+        // Iterate through the predefined order and add sheets to the workbook
+        sheetOrder.forEach(type => {
+          const sheetData = response.data[type] || []; // Get data for the current activity type
+          if (sheetData.length > 0) {
+            // Convert JSON data to a worksheet and append to the workbook
+            const ws = XLSX.utils.json_to_sheet(sheetData);
+            XLSX.utils.book_append_sheet(wb, ws, type); // Add sheet with activity type name
+          } else {
+            // Add an empty sheet if no data for that type, to ensure all tabs are present
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([]), type);
+          }
+        });
+
+        XLSX.writeFile(wb, 'All_Activities_Report.xlsx'); // Save the workbook as an Excel file
+      } else {
+        // Existing single CSV download logic for specific activity types
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `${activity_type}_activities.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      // Optionally show a user-friendly message to the user
+    } finally {
+      setExporting(false); // Stop loading regardless of success or failure
+    }
+  };
+
+  // Column definitions for the activity table
   const columns = [
     { header: 'Student Email', accessor: 'email_id', sortKey: 'email_id' },
-    { header: 'Activity Name', accessor: 'activity_name', sortKey: 'activity_type' },
+    { header: 'Activity Type', accessor: 'activity_type', sortKey: 'activity_type' },
     { header: 'Title', accessor: 'title', sortKey: null, className: 'hidden sm:table-cell' },
     { header: 'Status', accessor: 'status', sortKey: 'status' },
     { header: 'Date', accessor: 'date', sortKey: 'date' },
     { header: 'Actions', accessor: 'actions', sortKey: null },
   ];
 
+  // Render cell content based on column accessor and row data
   const renderCell = (row, column) => {
     switch (column.accessor) {
-      case 'activity_name':
-        return (
-          row.activity_type || '-'
-        );
+      case 'activity_type': // Display the activity_type directly
+        return row.activity_type || '-';
       case 'title':
-        return row.title || row.paper_title || row.activity_name || row.course_name || row.startup_name || row.company_name || '-';
+        // Dynamically select the title field based on activity type for display
+        return row.title || row.paper_title || row.activity_name || row.course_name || row.project_name || row.company_name || row.patent_name || row.feature_name || '-';
       case 'status':
         return row.status;
       case 'date': {
-        const date = row.start_date || row.date || row.date_of_publication;
+        // Dynamically select the date field based on activity type for display
+        const date = row.start_date || row.date || row.date_of_publication || row.application_date || row.createdAt;
         return date ? new Date(date).toLocaleDateString() : "-";
       }
       case 'actions':
@@ -208,7 +378,7 @@ const FacultyDashboard = () => {
               } transition-colors duration-200`}
               aria-label="Download proof file"
               title="Download Proof"
-              disabled={!row.proof?.fileName}
+              disabled={!row.proof?.fileName} // Disable button if no proof file
             >
               <Download size={18} />
             </button>
@@ -219,61 +389,96 @@ const FacultyDashboard = () => {
     }
   };
 
+  // Field definitions for the details modal, categorized by activity type
   const fields = {
     Internship: [
       { label: 'Company Name', value: 'company_name' },
       { label: 'Role', value: 'internship_role' },
+      { label: 'Organization', value: 'organization' },
       { label: 'Department', value: 'department' },
       { label: 'Stipend', value: 'stipend' },
       { label: 'Start Date', value: 'start_date' },
       { label: 'End Date', value: 'end_date' },
+      { label: 'External Mentor', value: 'external_mentor' },
+      { label: 'Internal Mentor', value: 'internal_mentor' },
     ],
     CourseCertification: [
       { label: 'Course Name', value: 'course_name' },
       { label: 'Platform', value: 'platform' },
       { label: 'Course Type', value: 'course_type' },
-      { label: 'Date', value: 'date' },
+      { label: 'Start Date', value: 'start_date' },
+      { label: 'End Date', value: 'end_date' },
     ],
     Entrepreneurship: [
-      { label: 'Startup Name', value: 'startup_name' },
-      { label: 'Role', value: 'role' },
-      { label: 'Type', value: 'type' },
-      { label: 'Start Date', value: 'start_date' },
+      { label: 'Project Name', value: 'project_name' },
+      { label: 'Description', value: 'description' },
+      { label: 'Domain', value: 'domain' },
+      { label: 'Year of Start', value: 'year_of_start' },
+      { label: 'Status', value: 'status' },
+      { label: 'Created At', value: 'createdAt' },
     ],
     NonTechnicalActivity: [
       { label: 'Activity Name', value: 'activity_name' },
+      { label: 'Institute', value: 'institute' },
+      { label: 'Organizer', value: 'organizer' },
       { label: 'Type', value: 'type' },
-      { label: 'Position', value: 'position' },
       { label: 'Date', value: 'date' },
+      { label: 'Position', value: 'position' },
     ],
     OtherAchievement: [
       { label: 'Title', value: 'title' },
       { label: 'Description', value: 'description' },
-      { label: 'Date', value: 'date' },
+      { label: 'Month', value: 'month' },
+      { label: 'Year', value: 'year' },
+      { label: 'Category', value: 'category' },
+      { label: 'Created At', value: 'createdAt' },
     ],
     PaperPublication: [
       { label: 'Paper Title', value: 'paper_title' },
-      { label: 'Category', value: 'category' },
+      { label: 'Publication Name', value: 'publication_name' },
       { label: 'ISSN/ISBN', value: 'issn_isbn' },
+      { label: 'Category', value: 'category' },
       { label: 'Date of Publication', value: 'date_of_publication' },
     ],
     TechnicalActivity: [
       { label: 'Activity Name', value: 'activity_name' },
       { label: 'Type', value: 'type' },
-      { label: 'Position', value: 'position' },
+      { label: 'Institute', value: 'institute' },
+      { label: 'Organizer', value: 'organizer' },
       { label: 'Date', value: 'date' },
+      { label: 'Position', value: 'position' },
     ],
     Volunteering: [
-      { label: 'Organization', value: 'organization' },
+      { label: 'Activity Name', value: 'activity_name' },
+      { label: 'Institute', value: 'institute' },
+      { label: 'Organizer', value: 'organizer' },
+      { label: 'Date', value: 'date' },
+      { label: 'Role', value: 'role' },
       { label: 'Cause', value: 'cause' },
-      { label: 'Hours Contributed', value: 'hours_contributed' },
-      { label: 'Start Date', value: 'start_date' },
     ],
     Workshop: [
       { label: 'Topic', value: 'topic' },
       { label: 'Mode', value: 'mode' },
       { label: 'Organized By', value: 'organized_by' },
       { label: 'Date', value: 'date' },
+    ],
+    Patents: [
+      { label: 'Patent Name', value: 'patent_name' },
+      { label: 'Application No', value: 'application_no' },
+      { label: 'Application Date', value: 'application_date' },
+      { label: 'User Type', value: 'user_type' },
+      { label: 'Inventor Name', value: 'inventor_name' },
+      { label: 'Description', value: 'description' },
+      { label: 'Co-Inventors', value: 'co_inventors' },
+      { label: 'Status', value: 'status' },
+      { label: 'Date', value: 'date' },
+    ],
+    Featured: [
+      { label: 'Feature Name', value: 'feature_name' },
+      { label: 'Date', value: 'date' },
+      { label: 'Topic', value: 'topic' },
+      { label: 'Cause', value: 'cause' },
+      { label: 'Link', value: 'link' },
     ],
   };
 
@@ -284,8 +489,7 @@ const FacultyDashboard = () => {
         <nav className="bg-white shadow-lg border-b border-gray-200 fixed w-full top-0 z-50 transition-all duration-300 ease-in-out">
           <div className="max-w-full mx-auto px-6 sm:px-10 lg:px-15 h-16 flex justify-between items-center">
 
-            <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted spacing for smaller screens */}
-              {/* Dashboard Title - Consistent branding */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="ml-2">
                 <div className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent tracking-tight">
                   Faculty Dashboard
@@ -294,14 +498,13 @@ const FacultyDashboard = () => {
             </div>
 
             {/* Right Section: User Profile + Logout */}
-            <div className="flex items-center space-x-2 sm:space-x-4"> {/* Adjusted spacing */}
-              {/* User Profile */}
+            <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="relative group">
                 <div
                   className="flex items-center space-x-1 sm:space-x-2 p-1 rounded-full hover:bg-gray-100 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   {(imgError || !user?.pic) ? (
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm sm:text-base"> {/* Smaller for mobile */}
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm sm:text-base">
                       {user?.firstName?.[0] || ''}{user?.lastName?.[0] || ''}
                     </div>
                   ) : (
@@ -313,12 +516,10 @@ const FacultyDashboard = () => {
                       referrerPolicy="no-referrer"
                     />
                   )}
-                  {/* Hide full name on small screens, show on medium+ */}
                   <p className='text-sm sm:text-base font-medium text-gray-800 hidden md:block'>{user?.firstName + " " + user?.lastName}</p>
                 </div>
               </div>
 
-              {/* Logout Button */}
               <button
                 onClick={logout}
                 className="p-2 cursor-pointer rounded-lg flex items-center text-white hover:text-gray-100 bg-red-600 hover:bg-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 text-sm font-medium touch-manipulation"
@@ -341,21 +542,26 @@ const FacultyDashboard = () => {
         />
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"> {/* Changed to 4 columns */}
           <div className="bg-gradient-to-r from-[#f4b400] to-[#f7c670] rounded-xl p-6 text-white shadow-lg transform hover:scale-[1.02] transition-all duration-300">
             <h3 className="text-xl text-black font-medium opacity-90">Total Activities</h3>
-            <p className="text-3xl font-bold mt-2">{totalActivitys}</p>
-            <p className="text-xs mt-2 opacity-80">+12% from last month</p>
+            <p className="text-3xl font-bold mt-2">{totalActivities}</p>
+            <p className="text-xs text-black mt-2 opacity-80">Overall count of filtered Rows</p>
           </div>
           <div className="bg-gradient-to-r from-[#f4b400] to-[#f7c670] rounded-xl p-6 text-white shadow-lg transform hover:scale-[1.02] transition-all duration-300">
             <h3 className="text-xl text-black font-medium opacity-90">Completed</h3>
-            <p className="text-3xl font-bold mt-2">856</p>
-            <p className="text-xs mt-2 opacity-80">68.6% completion rate</p>
+            <p className="text-3xl font-bold mt-2">{totalCompletedActivities}</p>
+            <p className="text-xs mt-2 text-black opacity-80">Activities with proof and end date</p>
           </div>
           <div className="bg-gradient-to-r from-[#f4b400] to-[#f7c670] rounded-xl p-6 text-white shadow-lg transform hover:scale-[1.02] transition-all duration-300">
-            <h3 className="text-xl text-black font-medium opacity-90">Pending Review</h3>
-            <p className="text-3xl font-bold mt-2">392</p>
-            <p className="text-xs mt-2 opacity-80">31.4% pending</p>
+            <h3 className="text-xl text-black font-medium opacity-90">Pending Submissions</h3>
+            <p className="text-3xl font-bold mt-2">{totalPendingActivities}</p>
+            <p className="text-xs text-black mt-2 opacity-80">Activities awaiting proof or end date</p>
+          </div>
+          <div className="bg-gradient-to-r from-[#f4b400] to-[#f7c670] rounded-xl p-6 text-white shadow-lg transform hover:scale-[1.02] transition-all duration-300">
+            <h3 className="text-xl text-black font-medium opacity-90">Unique Students</h3>
+            <p className="text-3xl font-bold mt-2">{totalUniqueStudents}</p>
+            <p className="text-xs text-black mt-2 opacity-80">Number of unique students in filtered data</p>
           </div>
         </div>
 
@@ -364,12 +570,29 @@ const FacultyDashboard = () => {
           <div className="flex justify-between items-center p-4 border-b border-slate-100">
             <h2 className="text-lg font-semibold text-slate-800">Student Activities</h2>
             <button
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              aria-label="Download all filtered data as CSV"
-              disabled={loading}
+              onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Download all filtered data as CSV or Excel"
+              disabled={loading || exporting} // Disable while loading or exporting
             >
-              <Download size={16} />
-              <span>Export CSV</span>
+              {exporting ? (
+                <>
+                  <svg
+                    className="animate-spin w-4 h-4 text-white"
+                    viewBox="0 0 24 24"
+                    aria-label="Exporting"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Exporting...</span>
+                </>
+              ) : (
+                <>
+                  <Download size={16} />
+                  <span>Export {filters.activities.activity_type === 'All' ? 'Excel' : 'CSV'}</span>
+                </>
+              )}
             </button>
           </div>
           
@@ -570,11 +793,14 @@ const FacultyDashboard = () => {
                     <div key={index}>
                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{field.label}</p>
                       <p className="text-slate-800 mt-1">
-                        {field.value === 'start_date' || field.value === 'end_date' || field.value === 'date' || field.value === 'date_of_publication'
+                        {/* Render date fields with toLocaleDateString, others directly */}
+                        {['start_date', 'end_date', 'date', 'date_of_publication', 'application_date', 'createdAt', 'updatedAt'].includes(field.value)
                           ? selectedActivity[field.value]
                             ? new Date(selectedActivity[field.value]).toLocaleDateString()
                             : '-'
-                          : selectedActivity[field.value] || '-'}
+                          : Array.isArray(selectedActivity[field.value]) // Handle arrays (e.g., co_inventors)
+                            ? selectedActivity[field.value].join(', ') || '-'
+                            : selectedActivity[field.value] || '-'}
                       </p>
                     </div>
                   ))}
@@ -582,11 +808,11 @@ const FacultyDashboard = () => {
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Status</p>
                     <p className={`mt-1 font-medium ${
-                      selectedActivity.proof?.fileName && selectedActivity.end_date 
+                      selectedActivity.status === 'Completed'
                         ? 'text-green-600' 
                         : 'text-amber-600'
                     }`}>
-                      {selectedActivity.proof?.fileName && selectedActivity.end_date ? 'Completed' : 'Pending'}
+                      {selectedActivity.status}
                     </p>
                   </div>
                   

@@ -1,4 +1,5 @@
 import CourseCertification from '../models/course_certificationsModel.js';
+import student_profile from '../models/student_profileModel.js';
 
 /**
  * @desc    Fetch all certifications for the logged-in student
@@ -76,6 +77,12 @@ export const uploadCertification = async (req, res) => {
 
     const newCertification = new CourseCertification(certificationData);
     const savedCertification = await newCertification.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,

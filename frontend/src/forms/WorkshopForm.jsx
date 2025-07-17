@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { FileText, Upload, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { FileText, Upload, CheckCircle, AlertTriangle, Clock, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const WorkshopForm = ({ initialData, onSubmit, loading }) => {
   const [formData, setFormData] = useState(
@@ -15,6 +16,7 @@ const WorkshopForm = ({ initialData, onSubmit, loading }) => {
     }
   );
   const [isDragging, setIsDragging] = useState(false);
+  const [certificateError, setCertificateError] = useState(null);
   const dragCounter = useRef(0);
   const fileInputRef = useRef(null);
 
@@ -93,8 +95,19 @@ const WorkshopForm = ({ initialData, onSubmit, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setCertificateError(null); // Reset error state
+    
+    // Validate certificate status
+    if (!formData.proof && !formData.no_certificate_yet) {
+      setCertificateError('Please either upload your certificate or check the box if you will submit it later');
+      toast.error('Please either upload your certificate or check the box if you will submit it later');
+      return;
+    }
+
+    // If we get here, form is valid
     onSubmit(formData);
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="bg-white shadow-2xl border border-slate-200 p-6">
@@ -202,6 +215,7 @@ const WorkshopForm = ({ initialData, onSubmit, loading }) => {
               name="date"
               required
               value={formData.date ? new Date(formData.date).toISOString().split('T')[0] : ''}
+              max={new Date().toISOString().split('T')[0]}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               aria-label="Date"
@@ -280,16 +294,19 @@ const WorkshopForm = ({ initialData, onSubmit, loading }) => {
           <button
             type="submit"
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={
-              loading ||
-              (!formData.proof && !formData.no_certificate_yet)
-            }
+            disabled={loading}
             aria-label={initialData?._id ? 'Update Workshop' : 'Add Workshop'}
           >
             {initialData?._id ? 'Update Workshop' : 'Add Workshop'}
           </button>
         </div>
       </div>
+      {certificateError && (
+                  <div className="flex items-center text-red-600 text-sm p-2 mt-2">
+                    <XCircle className="w-4 h-4 mr-1" />
+                    {certificateError}
+                  </div>
+                )}
     </form>
   );
 };

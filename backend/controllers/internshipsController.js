@@ -1,5 +1,6 @@
 import Internship from '../models/internshipsModel.js'; 
 import multer from "multer"
+import student_profile from '../models/student_profileModel.js';
 /**
  * @desc    Fetch all internships for the logged-in student
  * @route   GET /api/internships
@@ -88,6 +89,12 @@ export const uploadInternship = async (req, res) => {
 
     const newInternship = new Internship(internshipData);
     const savedInternship = await newInternship.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+      { email_id: userEmail },
+      { $set: { last_updated: new Date() } },
+      { new: true }
+    );
 
     res.status(201).json({
       success: true,

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { FileText, Upload, CheckCircle, AlertTriangle } from 'lucide-react';
+import { FileText, Upload, CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const EntrepreneurshipForm = ({ initialData, onSubmit, loading }) => {
   const [formData, setFormData] = useState(
@@ -14,6 +15,7 @@ const EntrepreneurshipForm = ({ initialData, onSubmit, loading }) => {
     }
   );
   const [isDragging, setIsDragging] = useState(false);
+  const [certificateError, setCertificateError] = useState(null);
   const dragCounter = useRef(0);
   const fileInputRef = useRef(null);
 
@@ -92,8 +94,19 @@ const EntrepreneurshipForm = ({ initialData, onSubmit, loading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setCertificateError(null); // Reset error state
+    
+    // Validate certificate status
+    if (!formData.proof && !formData.no_certificate_yet) {
+      setCertificateError('Please either upload your certificate or check the box if you will submit it later');
+      toast.error('Please either upload your certificate or check the box if you will submit it later');
+      return;
+    }
+
+    // If we get here, form is valid
     onSubmit(formData);
   };
+
 
   return (
     <div className="bg-white shadow-2xl border border-slate-200 p-6">

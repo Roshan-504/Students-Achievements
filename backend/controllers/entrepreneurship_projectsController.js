@@ -1,4 +1,5 @@
 import Entrepreneurship from '../models/entrepreneurship_projectsModel.js';
+import student_profile from '../models/student_profileModel.js';
 
 /**
  * @desc    Fetch all entrepreneurship records for the logged-in student
@@ -76,6 +77,12 @@ export const uploadEntrepreneurship = async (req, res) => {
 
     const newRecord = new Entrepreneurship(entrepreneurshipData);
     const savedRecord = await newRecord.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,

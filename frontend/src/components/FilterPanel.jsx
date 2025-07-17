@@ -1,3 +1,5 @@
+// FilterPanel.jsx
+
 import React, { useState } from 'react';
 import { ChevronDown, ChevronUp, Filter } from 'lucide-react';
 
@@ -17,21 +19,26 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
     'TechnicalActivity',
     'Volunteering',
     'Workshop',
+    'Patents', // Added Patents
+    'Featured', // Added Featured
   ];
 
   const departments = ['INFT', 'CMPN', 'AIDS', 'EXTC', 'AURO', 'ECS'];
 
+  // Handles changes to filter inputs and updates the filters state
   const handleFilterChange = (e, section) => {
     const { name, value, type, checked } = e.target;
     if (section === 'students' && name === 'department') {
+      // Special handling for multi-select department checkboxes
       const updatedDepartments = filters.students.department.includes(value)
-        ? filters.students.department.filter((dep) => dep !== value)
-        : [...filters.students.department, value];
+        ? filters.students.department.filter((dep) => dep !== value) // Remove if already selected
+        : [...filters.students.department, value]; // Add if not selected
       setFilters((prev) => ({
         ...prev,
         students: { ...prev.students, department: updatedDepartments },
       }));
     } else if (section === 'students' && name === 'email') {
+      // Validate email format for student email filter
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       setEmailError(emailRegex.test(value) || value === '' ? '' : 'Invalid email format');
       setFilters((prev) => ({
@@ -39,6 +46,7 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
         students: { ...prev.students, email: value },
       }));
     } else {
+      // General handling for other filter types (text, number, select, radio)
       setFilters((prev) => ({
         ...prev,
         [section]: { ...prev[section], [name]: type === 'checkbox' ? checked : value },

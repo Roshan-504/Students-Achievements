@@ -106,14 +106,14 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
     // Validate certificate status
     if (!formData.proof && !formData.no_certificate_yet) {
       setCertificateError('Please either upload your certificate or check the box if you will submit it later');
-      toast.error(certificateError);
+      toast.error('Please either upload your certificate or check the box if you will submit it later');
       return;
     }
 
     // Validate end date if not ongoing
     if (!formData.ongoing && !formData.end_date) {
       setCertificateError('Please provide an end date or mark the internship as ongoing');
-      toast.error(certificateError);
+      toast.error('Please provide an end date or mark the internship as ongoing');
       return;
     }
 
@@ -208,6 +208,7 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
               name="start_date"
               required
               value={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : ''}
+              max={new Date().toISOString().split('T')[0]}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               aria-label="Start Date"
@@ -238,6 +239,8 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
               name="end_date"
               disabled={formData.ongoing}
               value={formData.end_date ? new Date(formData.end_date).toISOString().split('T')[0] : ''}
+              min={formData.start_date ? new Date(formData.start_date).toISOString().split('T')[0] : undefined}
+              max={new Date().toISOString().split('T')[0]}
               onChange={handleChange}
               className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 ${
                 formData.ongoing ? 'bg-gray-100 cursor-not-allowed text-gray-500 border-gray-300' : ''
@@ -353,6 +356,7 @@ const InternshipForm = ({ initialData, onSubmit, loading }) => {
             type="submit"
             className="px-6 py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={initialData?._id ? 'Update Internship' : 'Add Internship'}
+            disabled={loading}
           >
             {initialData?._id ? 'Update Internship' : 'Add Internship'}
           </button>

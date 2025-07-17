@@ -20,7 +20,5 @@ const studentProfileSchema = new mongoose.Schema({
   last_updated: Date
 });
 
-studentProfileSchema.index({ email_id: 1 });
-
 const student_profile = mongoose.model('student_profile', studentProfileSchema);
 export default student_profile;

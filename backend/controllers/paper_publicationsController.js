@@ -1,4 +1,5 @@
 import PaperPublication from '../models/paper_publicationsModel.js';
+import student_profile from '../models/student_profileModel.js';
 
 /**
  * @desc    Fetch all paper publications for the logged-in student
@@ -76,6 +77,12 @@ export const uploadPaperPublication = async (req, res) => {
 
     const newPublication = new PaperPublication(publicationData);
     const savedPublication = await newPublication.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,

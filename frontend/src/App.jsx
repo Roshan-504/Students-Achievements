@@ -23,6 +23,7 @@ import ContactForm from './forms/ContactForm';
 import { useAuthStore } from './context/authStore';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import BatchManagementPage from './pages/Batch';
 
 
 function App() {
@@ -88,7 +89,7 @@ function App() {
         
         <Route path="/admin" element={
           <ProtectedRoute roles={['admin']}>
-            <AdminDashboard />
+            <BatchManagementPage />
           </ProtectedRoute>
         } />
         

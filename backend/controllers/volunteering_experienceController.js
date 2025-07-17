@@ -1,3 +1,4 @@
+import student_profile from '../models/student_profileModel.js';
 import Volunteering from '../models/volunteering_experienceModel.js';
 
 /**
@@ -76,6 +77,12 @@ export const uploadVolunteering = async (req, res) => {
     };
 
     const newVolunteering = await Volunteering.create(volunteeringData);
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
     
     res.status(201).json({
       success: true,

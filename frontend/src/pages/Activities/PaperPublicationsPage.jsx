@@ -280,13 +280,6 @@ const PaperPublicationsPage = () => {
                         >
                           <Edit2 size={16} />
                         </button>
-                        <button
-                          onClick={() => deletePublication(pub._id)}
-                          className="text-red-600 hover:text-red-900 transition-colors p-1 rounded hover:bg-red-50"
-                          title="Delete"
-                        >
-                          <X size={16} />
-                        </button>
                       </div>
                     </td>
                   </tr>

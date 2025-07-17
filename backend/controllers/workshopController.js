@@ -1,3 +1,4 @@
+import student_profile from '../models/student_profileModel.js';
 import Workshop from '../models/workshopModel.js';
 
 /**
@@ -75,6 +76,12 @@ export const uploadWorkshop = async (req, res) => {
 
     const newWorkshop = new Workshop(workshopData);
     const savedWorkshop = await newWorkshop.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,

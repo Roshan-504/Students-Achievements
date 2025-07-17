@@ -1,4 +1,5 @@
 import NonTechnicalActivity from '../models/non_technical_activitiesModel.js';
+import student_profile from '../models/student_profileModel.js';
 
 /**
  * @desc    Fetch all non-technical activities for the logged-in student
@@ -78,6 +79,12 @@ export const uploadNonTechnicalActivity = async (req, res) => {
 
     const newActivity = new NonTechnicalActivity(activityData);
     const savedActivity = await newActivity.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,

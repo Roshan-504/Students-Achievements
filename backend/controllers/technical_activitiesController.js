@@ -1,3 +1,4 @@
+import student_profile from '../models/student_profileModel.js';
 import TechnicalActivity from '../models/technical_activitiesModel.js';
 
 /**
@@ -78,6 +79,12 @@ export const uploadTechnicalActivity = async (req, res) => {
 
     const newActivity = new TechnicalActivity(activityData);
     const savedActivity = await newActivity.save();
+
+    const updatedStudent = await student_profile.findOneAndUpdate(
+          { email_id: userEmail },
+          { $set: { last_updated: new Date() } },
+          { new: true }
+        );
 
     res.status(201).json({
       success: true,
