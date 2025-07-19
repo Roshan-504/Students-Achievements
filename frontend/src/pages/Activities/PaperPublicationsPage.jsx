@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit2, Plus, X, Search, Calendar, FileText, BookOpen, Tag, File, Eye, Download, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Edit2, Plus, X, Search, Calendar, FileText, BookOpen, Tag, Link as LinkIcon, Eye, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import PaperPublicationForm from '../../forms/PaperPublicationForm';
 import axiosInstance from '../../services/axiosInstance';
 import toast from 'react-hot-toast';
@@ -46,22 +46,20 @@ const PaperPublicationsPage = () => {
         { position: 'top-center', duration: Infinity }
       );
 
-      const form = new FormData();
-      form.append('paper_title', formData.paper_title);
-      form.append('publication_name', formData.publication_name);
-      form.append('issn_isbn', formData.issn_isbn);
-      form.append('category', formData.category);
-      form.append('date_of_publication', formData.date_of_publication);
-      if (formData.proof) {
-        form.append('proof', formData.proof);
-      }
+      const payload = {
+        paper_title: formData.paper_title,
+        publication_name: formData.publication_name,
+        issn_isbn: formData.issn_isbn,
+        category: formData.category,
+        date_of_publication: formData.date_of_publication,
+        proof: formData.proof || null,
+      };
 
       let response;
       if (editingPublication) {
         response = await axiosInstance.put(
           `/student/update/paper-publication/${editingPublication._id}`,
-          form,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
+          payload
         );
         
         // Update state
@@ -82,8 +80,7 @@ const PaperPublicationsPage = () => {
       } else {
         response = await axiosInstance.post(
           '/student/upload/paper-publication',
-          form,
-          { headers: { 'Content-Type': 'multipart/form-data' } }
+          payload
         );
         
         // Update state
@@ -110,49 +107,16 @@ const PaperPublicationsPage = () => {
     }
   };
 
-  // Download proof
-  const downloadProof = async (publication) => {
-    try {
-      const response = await axiosInstance.get(
-        `/student/download/paper-publication/${publication._id}`,
-        { responseType: 'blob' }
-      );
-      
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', publication.proof.fileName);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (error) {
-      console.error('Error downloading proof:', error);
-      setError(error.response?.data?.message || 'Failed to download proof');
-    }
-  };
-
-  // Delete publication
-  const deletePublication = async (id) => {
-    try {
-      setLoading(true);
-      await axiosInstance.delete(`/student/paper-publication/${id}`);
-      
-      setCompletePublications(completePublications.filter(p => p._id !== id));
-      setIncompletePublications(incompletePublications.filter(p => p._id !== id));
-      
-      toast.success('Publication deleted successfully');
-    } catch (error) {
-      console.error('Error deleting publication:', error);
-      setError(error.response?.data?.message || 'Error deleting publication');
-    } finally {
-      setLoading(false);
+  // Open proof link
+  const openProofLink = (publication) => {
+    if (publication.proof?.fileName) {
+      window.open(publication.proof.fileName, '_blank');
     }
   };
 
   // Get status badge
   const getStatusBadge = (publication) => {
     const hasProof = publication.proof?.fileName;
-    const isPending = !hasProof && !publication.no_certificate_yet;
     
     if (hasProof) {
       return (
@@ -161,14 +125,8 @@ const PaperPublicationsPage = () => {
           Complete
         </span>
       );
-    } else if (publication.no_certificate_yet) {
-      return (
-        <span className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 bg-blue-100 text-blue-800">
-          <Clock className="w-3 h-3" />
-          Pending Upload
-        </span>
-      );
-    } else {
+    }
+    else {
       return (
         <span className="px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 bg-yellow-100 text-yellow-800">
           <AlertCircle className="w-3 h-3" />
@@ -211,19 +169,19 @@ const PaperPublicationsPage = () => {
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ISSN/ISBN</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Paper</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Paper Link</th>
                   <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {publications.map((pub) => (
                   <tr key={pub._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 max-w-[300px]"> {/* Added max-width */}
-                      <div className="flex items-center min-w-0"> {/* Added min-w-0 */}
+                    <td className="px-6 py-4 max-w-[300px]">
+                      <div className="flex items-center min-w-0">
                         <div className="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm mr-3">
                           {pub.paper_title.charAt(0)}
                         </div>
-                        <div className="min-w-0 overflow-hidden"> {/* Added overflow-hidden */}
+                        <div className="min-w-0 overflow-hidden">
                           <div className="text-sm font-semibold text-gray-900 truncate">
                             {pub.paper_title}
                           </div>
@@ -248,16 +206,16 @@ const PaperPublicationsPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       {pub.proof?.fileName ? (
                         <button
-                          onClick={() => downloadProof(pub)}
+                          onClick={() => openProofLink(pub)}
                           className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
                         >
-                          <Download className="w-4 h-4 mr-1" />
-                          Download
+                          <LinkIcon className="w-4 h-4 mr-1" />
+                          View Link
                         </button>
                       ) : (
                         <span className="text-gray-400 flex items-center">
-                          <File className="w-4 h-4 mr-1" />
-                          Not Uploaded
+                          <LinkIcon className="w-4 h-4 mr-1" />
+                          Not Provided
                         </span>
                       )}
                     </td>
@@ -361,7 +319,7 @@ const PaperPublicationsPage = () => {
         {renderPublicationTable(
           incompletePublications,
           "Publications Needing Proof",
-          "These publications are missing proof files. Please add proof documents to complete your records."
+          "These publications are missing proof links. Please add proof links to complete your records."
         )}
 
         {/* Complete Publications Table */}
@@ -468,13 +426,13 @@ const PaperPublicationsPage = () => {
                     
                     {selectedPublication.proof?.fileName && (
                       <div>
-                        <h3 className="text-lg font-semibold text-slate-800 mb-3">Proof Document</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 mb-3">Paper Link</h3>
                         <button
-                          onClick={() => downloadProof(selectedPublication)}
+                          onClick={() => openProofLink(selectedPublication)}
                           className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-2"
                         >
-                          <Download className="w-5 h-5" />
-                          Download Proof
+                          <LinkIcon className="w-5 h-5" />
+                          View Paper
                         </button>
                       </div>
                     )}

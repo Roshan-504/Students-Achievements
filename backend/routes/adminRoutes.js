@@ -1,7 +1,7 @@
 import express from 'express';
 import uploadXcel from '../middlewares/uploadXcel.js';
 import { authenticate, authorizeRoles } from '../middlewares/auth.js';
-import {uploadStudents, uploadFaculty, getBatches, getBatchStudents} from '../controllers/adminController.js';
+import {uploadStudents, uploadFaculty, getBatches, getBatchStudents, getFacultyCount, deleteStudent, deleteBatch} from '../controllers/adminController.js';
 
 const router = express.Router();
 
@@ -17,5 +17,13 @@ router.get('/batches', authenticate, authorizeRoles('admin'), getBatches);
 // get students in batch
 router.get('/batch-students', getBatchStudents);
 
+// get faculty count
+router.get('/faculty/count', authenticate, authorizeRoles('admin'), getFacultyCount);
+
+// delete student
+router.delete('/delete-student', authenticate, authorizeRoles('admin'), deleteStudent);
+
+// delete batch
+router.delete('/delete-batch', authenticate, authorizeRoles('admin'), deleteBatch);
 
 export default router;

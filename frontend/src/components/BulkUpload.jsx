@@ -99,7 +99,7 @@ const BulkUploadModal = ({ isOpen, onClose, uploadTypeOptions = [] }) => {
       // Close modal after success
       setTimeout(() => {
         onClose();
-      }, 1500);
+      }, 1000);
       
     } catch (error) {
       console.error('Upload error:', error);

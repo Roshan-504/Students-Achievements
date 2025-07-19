@@ -14,14 +14,41 @@ import {
   Calendar
 } from 'lucide-react';
 import '../App.css';
+import axiosInstance from '../services/axiosInstance';
 
-const Settings = ({ contactMessages, updateMessageStatus }) => {
+const Settings = () => {
+  const [contactMessages, setContactMessages] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+      const fetchMessages = async () => {
+        setIsLoaded(true);
+        try {
+          const response = await axiosInstance.get('/contact-us/messages');
+          setContactMessages(response.data.data);
+        } catch (error) {
+          console.error('Failed to fetch contact messages:', error);
+        }
+        finally {
+          setIsLoaded(false);
+        }
+      };
+  
+      fetchMessages();
+    },[]);
+  
+  const updateMessageStatus = async (id, status) => {
+      try {
+        await axiosInstance.patch(`/contact-us/message/${id}`, { status });
+        setContactMessages(prev => prev.map(msg => 
+          msg._id === id ? { ...msg, status } : msg
+        ));
+      } catch (error) {
+        console.error('Failed to update message status:', error);
+      }
+    };
     
-    useEffect(() => {
-        const timer = setTimeout(() => setIsLoaded(true), 100);
-        return () => clearTimeout(timer);
-      }, []);
-        const [isLoaded, setIsLoaded] = useState(false);
+    
         const [searchTerm, setSearchTerm] = useState('');
         const [showNoticeModal, setShowNoticeModal] = useState(false);
         const [editingNotice, setEditingNotice] = useState(null);
@@ -312,6 +339,12 @@ const Settings = ({ contactMessages, updateMessageStatus }) => {
           <p className="text-gray-600 mt-1">Manage student reports, notices, and system settings</p>
         </div>
       </div>
+
+      {isLoaded && (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
 
       {/* Student Reports Section Contact Us form data should be displayed here */}
         <div className="flex space-x-6 overflow-x-auto pb-4 px-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">

@@ -10,7 +10,7 @@ import { authenticate } from '../middlewares/auth.js';
 const router = express.Router();
 
 // Submit contact form (public)
-router.post('/message', submitContactForm);
+router.post('/message', authenticate, submitContactForm);
 
 // Get all messages (admin only)
 router.get('/messages', authenticate, getAllMessages);

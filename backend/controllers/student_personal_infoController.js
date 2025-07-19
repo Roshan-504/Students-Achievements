@@ -60,6 +60,7 @@ export const updateStudentProfile = async (req, res) => {
   try {
 
     const updateData = req.body;
+    const email = req.user.role == 'student' ? req.user.email : updateData.email_id;
 
     // Validate data types
     if (updateData.batch_no && !Number.isInteger(Number(updateData.batch_no))) {
@@ -84,7 +85,7 @@ export const updateStudentProfile = async (req, res) => {
     // Update profile
     const update = { ...updateData, last_updated: new Date() };
     const profile = await student_profile.findOneAndUpdate(
-      { email_id: req.user.email },
+      { email_id: email },
       { $set: update },
       { new: true, runValidators: true }
     ).lean();
@@ -96,6 +97,9 @@ export const updateStudentProfile = async (req, res) => {
     res.json({ profile });
   } catch (error) {
     console.error('Error updating profile:', error);
+     if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };

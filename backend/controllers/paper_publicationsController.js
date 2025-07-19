@@ -10,10 +10,8 @@ export const getPaperPublications = async (req, res) => {
   try {
     const userEmail = req.user.email;
 
-    // Exclude heavy binary data from being fetched
     const publications = await PaperPublication.find(
-      { email_id: userEmail },
-      { 'proof.data': 0 }
+      { email_id: userEmail }
     ).sort({ date_of_publication: -1 }); // Sort by most recent first
 
     const incompletePublications = publications.filter(pub =>
@@ -56,7 +54,8 @@ export const uploadPaperPublication = async (req, res) => {
       publication_name,
       issn_isbn,
       category,
-      date_of_publication
+      date_of_publication,
+      proof,
     } = req.body;
 
     const publicationData = {
@@ -66,23 +65,22 @@ export const uploadPaperPublication = async (req, res) => {
       issn_isbn,
       category,
       date_of_publication,
-      ...(req.file && {
+      ...(proof && {
         proof: {
-          data: req.file.buffer,
-          contentType: req.file.mimetype,
-          fileName: req.file.originalname,
-        },
-      }),
+          fileName: proof.fileName || proof // Handle both object and direct string
+        }
+      })
     };
 
     const newPublication = new PaperPublication(publicationData);
     const savedPublication = await newPublication.save();
 
-    const updatedStudent = await student_profile.findOneAndUpdate(
-          { email_id: userEmail },
-          { $set: { last_updated: new Date() } },
-          { new: true }
-        );
+    // Update student's last updated timestamp
+    await student_profile.findOneAndUpdate(
+      { email_id: userEmail },
+      { $set: { last_updated: new Date() } },
+      { new: true }
+    );
 
     res.status(201).json({
       success: true,
@@ -113,7 +111,8 @@ export const updatePaperPublication = async (req, res) => {
       publication_name,
       issn_isbn,
       category,
-      date_of_publication
+      date_of_publication,
+      proof,
     } = req.body;
 
     // Find publication and ensure it belongs to the user
@@ -135,18 +134,23 @@ export const updatePaperPublication = async (req, res) => {
       issn_isbn,
       category,
       date_of_publication,
-      ...(req.file && {
+      ...(proof && {
         proof: {
-          data: req.file.buffer,
-          contentType: req.file.mimetype,
-          fileName: req.file.originalname,
-        },
-      }),
+          fileName: proof.fileName || proof // Handle both object and direct string
+        }
+      })
     };
 
     const updatedPublication = await PaperPublication.findByIdAndUpdate(
       publicationId,
       { $set: publicationData },
+      { new: true }
+    );
+
+    // Update student's last updated timestamp
+    await student_profile.findOneAndUpdate(
+      { email_id: userEmail },
+      { $set: { last_updated: new Date() } },
       { new: true }
     );
 
@@ -166,40 +170,6 @@ export const updatePaperPublication = async (req, res) => {
 };
 
 /**
- * @desc    Download paper publication proof file
- * @route   GET /api/download/paper-publication/:id
- * @access  Private (Student)
- */
-export const downloadPaperPublicationProof = async (req, res) => {
-  try {
-    const publication = await PaperPublication.findOne({ 
-      _id: req.params.id, 
-      email_id: req.user.email 
-    });
-    
-    if (!publication || !publication.proof?.data) {
-      return res.status(404).json({
-        success: false,
-        message: 'Proof file not found or you do not have permission to access it',
-      });
-    }
-
-    res.set({
-      'Content-Type': publication.proof.contentType,
-      'Content-Disposition': `attachment; filename="${publication.proof.fileName}"`,
-    });
-    res.send(publication.proof.data);
-  } catch (error) {
-    console.error('Error downloading proof:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error downloading proof',
-      error: error.message,
-    });
-  }
-};
-
-/**
  * @desc    Delete a paper publication
  * @route   DELETE /api/paper-publication/:id
  * @access  Private (Student)
@@ -209,29 +179,28 @@ export const deletePaperPublication = async (req, res) => {
     const userEmail = req.user.email;
     const publicationId = req.params.id;
 
-    // Find and delete the publication, ensuring it belongs to the logged-in user
-    const deletedPublication = await PaperPublication.findOneAndDelete({
-      _id: publicationId,
-      email_id: userEmail
+    const publication = await PaperPublication.findOneAndDelete({ 
+      _id: publicationId, 
+      email_id: userEmail 
     });
-    
-    if (!deletedPublication) {
+
+    if (!publication) {
       return res.status(404).json({
         success: false,
-        message: 'Paper publication not found or unauthorized'
+        message: 'Paper publication not found or you do not have permission to delete it',
       });
     }
-    
+
     res.status(200).json({
       success: true,
-      message: 'Paper publication deleted successfully'
+      message: 'Paper publication deleted successfully',
     });
   } catch (error) {
     console.error('Error deleting paper publication:', error);
     res.status(500).json({
       success: false,
       message: 'Error deleting paper publication',
-      error: error.message
+      error: error.message,
     });
   }
 };

@@ -8,9 +8,7 @@ const paperPublicationSchema = new mongoose.Schema({
   category: String,
   date_of_publication: Date,
   proof: {
-    data: { type: Buffer }, // Store file as binary
-    contentType: { type: String }, // e.g., 'application/pdf'
-    fileName: { type: String }, // Original file name
+    fileName: { type: String }, // URL In this case
   },
   },
   {

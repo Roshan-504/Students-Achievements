@@ -89,7 +89,7 @@ function App() {
         
         <Route path="/admin" element={
           <ProtectedRoute roles={['admin']}>
-            <BatchManagementPage />
+            <AdminDashboard />
           </ProtectedRoute>
         } />
         

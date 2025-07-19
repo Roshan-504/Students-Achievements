@@ -350,7 +350,7 @@ const FacultyDashboard = () => {
         return row.activity_type || '-';
       case 'title':
         // Dynamically select the title field based on activity type for display
-        return row.title || row.paper_title || row.activity_name || row.course_name || row.project_name || row.company_name || row.patent_name || row.feature_name || '-';
+        return row.title || row.paper_title || row.activity_name || row.course_name || row.project_name || row.company_name || row.patent_name || row.feature_name || row.startup_name || '-';
       case 'status':
         return row.status;
       case 'date': {
@@ -483,9 +483,10 @@ const FacultyDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br bg-[#f9f6f1]">
+    <div className= {`min-h-screen pb-5 ${user.role == 'faculty' ? 'bg-gradient-to-br bg-[#f9f6f1]' : ''}`}>
       
         {/* Top Navbar */}
+        { user.role == 'faculty' && (
         <nav className="bg-white shadow-lg border-b border-gray-200 fixed w-full top-0 z-50 transition-all duration-300 ease-in-out">
           <div className="max-w-full mx-auto px-6 sm:px-10 lg:px-15 h-16 flex justify-between items-center">
 
@@ -531,8 +532,9 @@ const FacultyDashboard = () => {
             </div>
           </div>
         </nav>
+        )}
       
-      <div className="max-w-7xl mx-auto mt-15 p-4 sm:p-6 lg:p-8">
+      <div className={`max-w-7xl mx-auto ${user.role == 'faculty' ? 'pt-16 p-4 sm:p-6 lg:p-8' : ''}`}>
         {/* Filter Panel */}
         <FilterPanel
           filters={filters}

@@ -63,21 +63,14 @@ const getRelevantDateField = (activityType) => {
 // Route to filter student profiles based on multiple criteria
 router.get('/students', authenticate, async (req, res) => {
   try {
-    // Ensure only faculty can access this route
-    if (req.user.role !== 'faculty') {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
 
     // Extract filter parameters from the query string
     const {
       department,
       batch_no,
       class_division, // Frontend uses class_division, maps to 'division' in schema
-      sgpi_min,
-      sgpi_max,
       gender,
       email, // Refers to student's email_id
-      prn,
       page = 1,
       limit = 10,
     } = req.query;
@@ -97,12 +90,6 @@ router.get('/students', authenticate, async (req, res) => {
     if (class_division) {
       query.division = class_division;
     }
-    // SGPI range filter: applies greater than or equal to ($gte) and less than or equal to ($lte)
-    if (sgpi_min || sgpi_max) {
-      query.average_sgpi = {}; // Use average_sgpi as per your schema
-      if (sgpi_min) query.average_sgpi.$gte = Number(sgpi_min);
-      if (sgpi_max) query.average_sgpi.$lte = Number(sgpi_max);
-    }
     // Gender filter
     if (gender) {
       query.gender = gender;
@@ -111,16 +98,13 @@ router.get('/students', authenticate, async (req, res) => {
     if (email) {
       query.email_id = { $regex: email, $options: 'i' };
     }
-    // PRN filter: uses regex for partial, case-insensitive matching on prn
-    if (prn) {
-      query.prn = { $regex: prn, $options: 'i' };
-    }
+   
 
     // Fetch student profiles based on the constructed query, with pagination and selection
     const students = await PersonalInfo.find(query)
       .skip((page - 1) * limit)
       .limit(Number(limit))
-      .select('email_id prn first_name last_name department batch_no division average_sgpi gender');
+      .select('email_id prn first_name last_name department batch_no division gender');
 
     // Get the total count of documents matching the query for pagination
     const total = await PersonalInfo.countDocuments(query);
@@ -141,10 +125,6 @@ router.get('/students', authenticate, async (req, res) => {
 // Route to filter activities based on activity type, student email, status, and date range
 router.get('/activities', authenticate, async (req, res) => {
   try {
-    // Ensure only faculty can access this route
-    if (req.user.role !== 'faculty') {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
 
     // Extract filter parameters from the query string
     const {
@@ -355,10 +335,6 @@ router.get('/activities', authenticate, async (req, res) => {
 // Route to download proof file for a specific activity
 router.get('/activities/proof/:id', authenticate, async (req, res) => {
   try {
-    // Ensure only faculty can access this route
-    if (req.user.role !== 'faculty') {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
     // Get activity type from query to select the correct model
     const { activity_type } = req.query;
     if (!activity_type || !activityModels[activity_type]) {
@@ -384,9 +360,6 @@ router.get('/activities/proof/:id', authenticate, async (req, res) => {
 // Route to download all filtered activities as CSV or multi-tab Excel
 router.get('/activities/download', authenticate, async (req, res) => {
   try {
-    if (req.user.role !== 'faculty') {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
 
     const { activity_type, email_id, status, start_date, end_date } = req.query;
 
@@ -505,9 +478,6 @@ router.get('/activities/download', authenticate, async (req, res) => {
 // Route to filter ContactUs submissions (no changes needed as per request)
 router.get('/contacts', authenticate, async (req, res) => {
   try {
-    if (req.user.role !== 'faculty') {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
 
     const { type, status, email, start_date, end_date, page = 1, limit = 10 } = req.query;
 
