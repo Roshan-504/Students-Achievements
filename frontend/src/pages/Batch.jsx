@@ -11,7 +11,7 @@ const BatchManagementPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comparisonDate, setComparisonDate] = useState(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    new Date(Date.now() - 30 * 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);

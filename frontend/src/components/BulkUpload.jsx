@@ -167,8 +167,9 @@ const BulkUploadModal = ({ isOpen, onClose, uploadTypeOptions = [] }) => {
             <ul className="mt-2 space-y-1 text-sm text-blue-700 list-disc list-inside pl-2">
               <li>First row must contain column headers</li>
               <li>Required columns depend on upload type</li>
+              <li>Student Header Format(Email, First Name, Last Name, Department, Batch, Division)</li>
+              <li>Faculty Header Format(Email, Department)</li>
               <li>File must be in Excel format (.xlsx)</li>
-              <li>Maximum file size: 5MB</li>
             </ul>
           </div>
 

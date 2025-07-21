@@ -51,12 +51,13 @@ export const getAllMessages = async (req, res) => {
   }
 };
 
-// Update message status
+// Update message status - delete when resolved
 export const updateMessageStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
+    // Validate status
     if (!['new', 'in-progress', 'resolved'].includes(status)) {
       return res.status(400).json({
         success: false,
@@ -64,6 +65,25 @@ export const updateMessageStatus = async (req, res) => {
       });
     }
 
+    // Handle resolved status - delete the message
+    if (status === 'resolved') {
+      const deletedMessage = await Contact.findByIdAndDelete(id);
+      
+      if (!deletedMessage) {
+        return res.status(404).json({
+          success: false,
+          message: 'Message not found'
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: 'Message resolved and deleted successfully',
+        data: deletedMessage
+      });
+    }
+
+    // Handle other status updates
     const updatedMessage = await Contact.findByIdAndUpdate(
       id,
       { status, updatedAt: Date.now() },

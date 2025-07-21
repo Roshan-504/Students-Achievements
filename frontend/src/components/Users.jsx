@@ -30,7 +30,7 @@ const Users = () => {
   const [filters, setFilters] = useState({
     division: { a: false, b: false, c: false },
     batchYear: '',
-    dateFilter: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    dateFilter: new Date(Date.now() - 30 * 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
   // Fetch batches data from backend

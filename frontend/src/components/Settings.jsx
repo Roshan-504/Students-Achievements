@@ -37,16 +37,25 @@ const Settings = () => {
       fetchMessages();
     },[]);
   
+  // Update message status function
   const updateMessageStatus = async (id, status) => {
-      try {
-        await axiosInstance.patch(`/contact-us/message/${id}`, { status });
+    try {
+      await axiosInstance.patch(`/contact-us/message/${id}`, { status });
+      
+      // Remove from UI immediately if resolved
+      if (status === 'resolved') {
+        setContactMessages(prev => prev.filter(msg => msg._id !== id));
+      } else {
+        // Update status for other cases
         setContactMessages(prev => prev.map(msg => 
           msg._id === id ? { ...msg, status } : msg
         ));
-      } catch (error) {
-        console.error('Failed to update message status:', error);
       }
-    };
+    } catch (error) {
+      console.error('Failed to update message status:', error);
+      // Optional: Add user notification here
+    }
+  };
     
     
         const [searchTerm, setSearchTerm] = useState('');
@@ -54,12 +63,6 @@ const Settings = () => {
         const [editingNotice, setEditingNotice] = useState(null);
         const [newNotice, setNewNotice] = useState({ title: '', content: '', type: 'info' });
 
-          const [admin, setAdmin] = useState({
-            name: 'Admin User',
-            email: 'admin@university.edu',
-            role: 'System Administrator',
-            avatar: null
-          });
         
           // Mock admin dashboard data
           const [dashboardData, setDashboardData] = useState({
