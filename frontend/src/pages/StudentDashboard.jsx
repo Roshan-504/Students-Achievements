@@ -230,6 +230,16 @@ const StudentDashboard = () => {
               Workshops
             </NavLink>
             <NavLink
+              to="/student/patents"
+              className={({ isActive }) =>
+                `block w-full text-left py-2 px-3 rounded-md transition-all duration-200 ${
+                  isActive ? 'bg-blue-100 text-blue-700 font-semibold' : 'hover:bg-blue-50 hover:text-blue-600'
+                }`
+              }
+            >
+              Patents
+            </NavLink>
+            <NavLink
               to="/student/achievements"
               className={({ isActive }) =>
                 `block w-full text-left py-2 px-3 rounded-md transition-all duration-200 ${

@@ -15,6 +15,7 @@ import workshopRoutes from './routes/workshopRoutes.js'
 import volunteeringRoutes from './routes/volunteering_experienceRoutes.js';
 import EntrepreneurshipRoutes from './routes/entrepreneurship_projectsRoutes.js'
 import OtherAchievementsRoutes from './routes/other_achievementsRoutes.js'
+import patentRoute from './routes/patentsRoutes.js';
 
 import './config/passport.js'; // Load Passport config BEFORE routes
 import {connectDB} from './config/db.js';
@@ -47,6 +48,7 @@ app.use('/student',certificationRoutes);
 app.use('/student',technicalActivityRoutes);
 app.use('/student',nonTechnicalActivityRoutes);
 app.use('/student',paperPublicationRoutes);
+app.use('/student',patentRoute);
 app.use('/student',workshopRoutes);
 app.use('/student',volunteeringRoutes);
 app.use('/student',EntrepreneurshipRoutes);

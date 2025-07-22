@@ -24,6 +24,7 @@ import { useAuthStore } from './context/authStore';
 import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import BatchManagementPage from './pages/Batch';
+import PatentPage from './pages/Activities/PatentPage';
 
 
 function App() {
@@ -70,12 +71,7 @@ function App() {
           <Route path="volunteering" element={<VolunteeringPage />} />
           <Route path="workshop" element={<WorkshopsPage />} />
           <Route path="achievements" element={<OtherAchievements />} />
-          <Route path="semesters" element={
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Semesters</h2>
-              <p className="text-gray-600">Semesters content will be displayed here...</p>
-            </div>
-          } />
+          <Route path="patents" element={<PatentPage />} />
           <Route path="contact-us" element={<ContactForm />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
