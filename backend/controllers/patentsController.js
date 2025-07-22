@@ -60,7 +60,7 @@ export const uploadPatent = async (req, res) => {
       inventor_name,
       description,
       co_inventors,
-      status,
+      status = 'Pending',
     } = req.body;
 
     const patentData = {
@@ -123,7 +123,7 @@ export const updatePatent = async (req, res) => {
       inventor_name,
       description,
       co_inventors,
-      status,
+      status = 'Pending'
     } = req.body;
 
     // Find patent and ensure it belongs to the user

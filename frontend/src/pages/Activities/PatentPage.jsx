@@ -512,7 +512,7 @@ const PatentPage = () => {
                     inventor_name: "",
                     description: "",
                     co_inventors: [],
-                    status: "",
+                    status: "Pending",
                     proof: null,
                     no_document_yet: false
                   }}
