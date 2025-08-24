@@ -334,7 +334,7 @@ const Settings = () => {
         };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -346,6 +346,12 @@ const Settings = () => {
       {isLoaded && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+
+      {contactMessages.length == 0 && (
+        <div className='flex min-h-full items-center justify-center'>
+          <p>No Report Messages Present</p>
         </div>
       )}
 

@@ -8,7 +8,6 @@ import { useAuthStore } from '../context/authStore';
 import FilterPanel from '../components/FilterPanel';
 
 // Import XLSX from CDN for client-side Excel generation
-// This script will be loaded in the browser environment.
 const loadXLSXScript = () => {
   return new Promise((resolve, reject) => {
     if (window.XLSX) {
@@ -29,50 +28,41 @@ const FacultyDashboard = () => {
   const [data, setData] = useState([]);
   const [imgError, setImgError] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
-  const [totalActivities, setTotalActivities] = useState(0); // Renamed for clarity
-  const [totalCompletedActivities, setTotalCompletedActivities] = useState(0); // New state for completed activities
-  const [totalPendingActivities, setTotalPendingActivities] = useState(0); // New state for pending activities
-  const [totalUniqueStudents, setTotalUniqueStudents] = useState(0); // New state for unique students
+  const [totalActivities, setTotalActivities] = useState(0);
+  const [totalCompletedActivities, setTotalCompletedActivities] = useState(0);
+  const [totalPendingActivities, setTotalPendingActivities] = useState(0);
+  const [totalUniqueStudents, setTotalUniqueStudents] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false); // New state for export loading
+  const [exporting, setExporting] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: '', direction: 'asc' });
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [filters, setFilters] = useState({
-    students: { department: [], batch_no: '', class_division: '', gender: '', email: '' },
+    students: { department: [], batch_no: '', division: '', gender: '', email: '', prn: '' },
     activities: { activity_type: 'All', status: '', start_date: '', end_date: '' },
   });
 
-  // Function to fetch activity data from the backend based on current filters and page
+  // Function to fetch activity data from the backend
   const fetchData = async (page = 1) => {
     setLoading(true);
     try {
       let url = `/api/faculty/activities?page=${page}&limit=10`;
+      
+      // Add activity filters
       const { activity_type, status, start_date, end_date } = filters.activities;
-      const studentFilters = filters.students;
-
-      // Append activity filters to URL
       if (activity_type) url += `&activity_type=${encodeURIComponent(activity_type)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
       if (start_date) url += `&start_date=${encodeURIComponent(start_date)}`;
       if (end_date) url += `&end_date=${encodeURIComponent(end_date)}`;
       
-      let studentEmailsToFilter = [];
-      // Check if any student filter is actively applied
-      const isStudentFilterApplied = Object.values(studentFilters).some(filterVal => 
-        (Array.isArray(filterVal) && filterVal.length > 0) || 
-        (typeof filterVal === 'string' && filterVal !== '') ||
-        (typeof filterVal === 'number' && filterVal !== 0) // For batch_no if it's a number and not 0
-      );
-
-      // If student filters are applied, fetch the matching student emails first
-      if (isStudentFilterApplied) {
-        studentEmailsToFilter = await fetchStudentEmails(studentFilters);
-        // If student filters are applied but no emails are found,
-        // pass an empty string for email_id. The backend's `$in: ['']` will
-        // correctly result in no activities being returned.
-        url += `&email_id=${encodeURIComponent(studentEmailsToFilter.join(','))}`;
-      }
+      // Add student filters
+      const { department, batch_no, division, gender, email, prn } = filters.students;
+      if (department.length > 0) url += `&department=${encodeURIComponent(department.join(','))}`;
+      if (batch_no) url += `&batch_no=${encodeURIComponent(batch_no)}`;
+      if (division) url += `&division=${encodeURIComponent(division)}`;
+      if (gender) url += `&gender=${encodeURIComponent(gender)}`;
+      if (email) url += `&email=${encodeURIComponent(email)}`;
+      if (prn) url += `&prn=${encodeURIComponent(prn)}`;
 
       const response = await axiosInstance.get(url);
       
@@ -86,7 +76,6 @@ const FacultyDashboard = () => {
       setCurrentPage(Number(response.data.page) || 1);
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Reset data and counts on error
       setData([]);
       setTotalActivities(0);
       setTotalCompletedActivities(0);
@@ -99,51 +88,27 @@ const FacultyDashboard = () => {
     }
   };
 
-  // Function to fetch student emails based on student filters
-  // This is used to first filter students, then use their emails to filter activities.
-  const fetchStudentEmails = async (studentFilters) => {
-    try {
-      let url = '/api/faculty/students?';
-      const { department, batch_no, class_division, gender, email, prn } = studentFilters;
-
-      // Append all active student filters to the URL for the student endpoint
-      if (department.length > 0) url += `&department=${encodeURIComponent(department.join(','))}`;
-      if (batch_no) url += `&batch_no=${encodeURIComponent(batch_no)}`;
-      if (class_division) url += `&class_division=${encodeURIComponent(class_division)}`;
-      if (gender) url += `&gender=${encodeURIComponent(gender)}`;
-      if (email) url += `&email=${encodeURIComponent(email)}`;
-      if (prn) url += `&prn=${encodeURIComponent(prn)}`;
-
-      const response = await axiosInstance.get(url);
-      // Return an array of email_ids from the filtered students
-      return response.data.students.map((student) => student.email_id);
-    } catch (error) {
-      console.error('Error fetching student emails:', error);
-      return []; // Return empty array on error
-    }
-  };
-
-  // Fetch data on initial component mount and whenever filters change
+  // Fetch data on initial component mount
   useEffect(() => {
     fetchData(1);
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
   // Apply filters and reset pagination/sorting
   const applyFilters = () => {
-    setCurrentPage(1); // Reset to first page
-    setSortConfig({ key: '', direction: 'asc' }); // Reset sorting
-    fetchData(1); // Fetch data with new filters
+    setCurrentPage(1);
+    setSortConfig({ key: '', direction: 'asc' });
+    fetchData(1);
   };
 
   // Reset all filters and refetch data
   const resetFilters = () => {
     setFilters({
-      students: { department: [], batch_no: '', class_division: '', gender: '', email: '' },
+      students: { department: [], batch_no: '', division: '', gender: '', email: '', prn: '' },
       activities: { activity_type: 'All', status: '', start_date: '', end_date: '' },
     });
-    setCurrentPage(1); // Reset to first page
-    setSortConfig({ key: '', direction: 'asc' }); // Reset sorting
-    fetchData(1); // Fetch data with reset filters
+    setCurrentPage(1);
+    setSortConfig({ key: '', direction: 'asc' });
+    fetchData(1);
   };
 
   // Handle sorting of table data
@@ -168,7 +133,6 @@ const FacultyDashboard = () => {
             bValue = b.status || "";
             break;
           case 'date':
-            // Prioritize specific date fields, then fallback to createdAt for sorting
             const dateA = new Date(a.start_date || a.date || a.date_of_publication || a.application_date || a.createdAt);
             const dateB = new Date(b.start_date || b.date || b.date_of_publication || b.application_date || b.createdAt);
             aValue = dateA.getTime();
@@ -179,22 +143,19 @@ const FacultyDashboard = () => {
             bValue = '';
         }
 
-        // Handle null/undefined values for sorting
         if (!aValue && !bValue) return 0;
         if (!aValue) return newDirection === 'asc' ? -1 : 1;
         if (!bValue) return newDirection === 'asc' ? 1 : -1;
 
-        // Case-insensitive string comparison
         if (typeof aValue === 'string') aValue = aValue.toLowerCase();
         if (typeof bValue === 'string') bValue = bValue.toLowerCase();
 
-        // Actual comparison logic
         if (aValue < bValue) return newDirection === 'asc' ? -1 : 1;
         if (aValue > bValue) return newDirection === 'asc' ? 1 : -1;
-        return 0; // Values are equal
+        return 0;
       });
 
-      setData(sortedData); // Update table data with sorted array
+      setData(sortedData);
     };
 
   // Handle viewing activity details in a modal
@@ -204,118 +165,81 @@ const FacultyDashboard = () => {
 
   // Handle downloading proof file
   const handleDownloadProof = async (row) => {
-    if (!row.proof?.fileName) return; // Do nothing if no proof file
+    if (!row.proof?.fileName) return;
     try {
-      // Make a GET request to the backend to download the proof
       const response = await axiosInstance.get(`/api/faculty/activities/proof/${row._id}?activity_type=${row.activity_type}`, {
-        responseType: 'blob', // Important for handling binary file data
+        responseType: 'blob',
       });
-      // Create a URL for the blob and trigger download
       const url = window.URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', row.proof.fileName); // Set download filename
+      link.setAttribute('download', row.proof.fileName);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url); // Clean up the URL object
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading proof:', error);
-      // Optionally show a user-friendly message to the user
     }
   };
 
-  // Handle export to CSV (single activity type) or multi-tab Excel (all activity types)
+  // Handle export to CSV/Excel
   const handleExport = async () => {
-    setExporting(true); // Set exporting state to true to show loading indicator
+    setExporting(true);
     try {
-      const { activity_type, status, start_date, end_date } = filters.activities;
-      const studentFilters = filters.students;
-
       let url = `/api/faculty/activities/download?`;
+      
+      // Add activity filters
+      const { activity_type, status, start_date, end_date } = filters.activities;
       if (activity_type) url += `activity_type=${encodeURIComponent(activity_type)}`;
       if (status) url += `&status=${encodeURIComponent(status)}`;
       if (start_date) url += `&start_date=${encodeURIComponent(start_date)}`;
       if (end_date) url += `&end_date=${encodeURIComponent(end_date)}`;
 
-      let studentEmailsToFilter = [];
-      const isStudentFilterApplied = Object.values(studentFilters).some(filterVal => 
-        (Array.isArray(filterVal) && filterVal.length > 0) || 
-        (typeof filterVal === 'string' && filterVal !== '') ||
-        (typeof filterVal === 'number' && filterVal !== 0)
-      );
+      // Add student filters
+      const { department, batch_no, division, gender, email, prn } = filters.students;
+      if (department.length > 0) url += `&department=${encodeURIComponent(department.join(','))}`;
+      if (batch_no) url += `&batch_no=${encodeURIComponent(batch_no)}`;
+      if (division) url += `&division=${encodeURIComponent(division)}`;
+      if (gender) url += `&gender=${encodeURIComponent(gender)}`;
+      if (email) url += `&email=${encodeURIComponent(email)}`;
+      if (prn) url += `&prn=${encodeURIComponent(prn)}`;
 
-      if (isStudentFilterApplied) {
-        studentEmailsToFilter = await fetchStudentEmails(studentFilters);
-        // If student filters are applied but no emails are found,
-        // pass an empty string for email_id. The backend's `$in: ['']` will
-        // correctly result in no activities being returned for export.
-        url += `&email_id=${encodeURIComponent(studentEmailsToFilter.join(','))}`;
+      const response = await axiosInstance.get(url, { 
+        responseType: activity_type === 'All' ? 'json' : 'blob' 
+      });
 
-        // Special handling: if student filters are applied and no students match,
-        // export an empty file immediately without hitting the backend for activities.
-        if (studentEmailsToFilter.length === 0) {
-            if (activity_type === 'All') {
-                await loadXLSXScript();
-                const wb = XLSX.utils.book_new();
-                // Define all possible sheet names for the multi-tab Excel
-                const sheetNames = [
-                    'Internship', 'CourseCertification', 'Entrepreneurship', 
-                    'NonTechnicalActivity', 'OtherAchievement', 'PaperPublication', 
-                    'TechnicalActivity', 'Volunteering', 'Workshop', 'Patents', 'Featured'
-                ];
-                sheetNames.forEach(sheetName => {
-                    // Add an empty sheet for each activity type
-                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([]), sheetName);
-                });
-                XLSX.writeFile(wb, 'All_Activities_Empty.xlsx'); // Save empty Excel file
-            } else {
-                const csvContent = "Student Email,Activity Type,Title,Status,Date\n"; // Headers only for CSV
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.setAttribute('download', `${activity_type}_activities_empty.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            }
-            setExporting(false); // Stop loading
-            return; // Exit function
-        }
-      }
-
-      // Make the request to the backend for download data
-      const response = await axiosInstance.get(url, { responseType: activity_type === 'All' ? 'json' : 'blob' });
-
-      // Handle multi-tab Excel export if activity_type is 'All'
       if (activity_type === 'All') {
-        await loadXLSXScript(); // Ensure XLSX library is loaded
-        const wb = XLSX.utils.book_new(); // Create a new workbook
+        await loadXLSXScript();
+        const wb = XLSX.utils.book_new();
 
-        // Define the order and names of sheets for the Excel file
+        // Define the order of sheets and their corresponding activity types
         const sheetOrder = [
           'Internship', 'CourseCertification', 'Entrepreneurship', 
-          'NonTechnicalActivity', 'OtherAchievement', 'PaperPublication', 
-          'TechnicalActivity', 'Volunteering', 'Workshop', 'Patents', 'Featured'
+          'OtherAchievement', 'NonTechnicalActivity', 'TechnicalActivity', 
+          'Workshop', 'PaperPublication', 'Volunteering', 'Patent', 'Featured'
         ];
 
-        // Iterate through the predefined order and add sheets to the workbook
-        sheetOrder.forEach(type => {
-          const sheetData = response.data[type] || []; // Get data for the current activity type
-          if (sheetData.length > 0) {
-            // Convert JSON data to a worksheet and append to the workbook
-            const ws = XLSX.utils.json_to_sheet(sheetData);
-            XLSX.utils.book_append_sheet(wb, ws, type); // Add sheet with activity type name
-          } else {
-            // Add an empty sheet if no data for that type, to ensure all tabs are present
+        // Check if response data is empty
+        const hasData = Object.values(response.data).some(arr => arr && arr.length > 0);
+        
+        if (!hasData) {
+          // Create Excel with empty sheets if no data
+          sheetOrder.forEach(type => {
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([]), type);
-          }
-        });
-
-        XLSX.writeFile(wb, 'All_Activities_Report.xlsx'); // Save the workbook as an Excel file
+          });
+          XLSX.writeFile(wb, 'All_Activities_Report_Empty.xlsx');
+        } else {
+          // Add sheets with data
+          sheetOrder.forEach(type => {
+            const sheetData = response.data[type] || [];
+            const ws = XLSX.utils.json_to_sheet(sheetData);
+            XLSX.utils.book_append_sheet(wb, ws, type);
+          });
+          XLSX.writeFile(wb, 'All_Activities_Report.xlsx');
+        }
       } else {
-        // Existing single CSV download logic for specific activity types
+        // Single activity type CSV download
         const url = window.URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }));
         const link = document.createElement('a');
         link.href = url;
@@ -327,9 +251,8 @@ const FacultyDashboard = () => {
       }
     } catch (error) {
       console.error('Error exporting data:', error);
-      // Optionally show a user-friendly message to the user
     } finally {
-      setExporting(false); // Stop loading regardless of success or failure
+      setExporting(false);
     }
   };
 
@@ -346,15 +269,13 @@ const FacultyDashboard = () => {
   // Render cell content based on column accessor and row data
   const renderCell = (row, column) => {
     switch (column.accessor) {
-      case 'activity_type': // Display the activity_type directly
+      case 'activity_type':
         return row.activity_type || '-';
       case 'title':
-        // Dynamically select the title field based on activity type for display
-        return row.title || row.paper_title || row.activity_name || row.course_name || row.project_name || row.company_name || row.patent_name || row.feature_name || row.startup_name || '-';
+        return row.title || row.paper_title || row.activity_name || row.course_name || row.project_name || row.company_name || row.patent_name || row.feature_name || '-';
       case 'status':
         return row.status;
       case 'date': {
-        // Dynamically select the date field based on activity type for display
         const date = row.start_date || row.date || row.date_of_publication || row.application_date || row.createdAt;
         return date ? new Date(date).toLocaleDateString() : "-";
       }
@@ -378,7 +299,7 @@ const FacultyDashboard = () => {
               } transition-colors duration-200`}
               aria-label="Download proof file"
               title="Download Proof"
-              disabled={!row.proof?.fileName} // Disable button if no proof file
+              disabled={!row.proof?.fileName}
             >
               <Download size={18} />
             </button>
@@ -414,7 +335,7 @@ const FacultyDashboard = () => {
       { label: 'Description', value: 'description' },
       { label: 'Domain', value: 'domain' },
       { label: 'Year of Start', value: 'year_of_start' },
-      { label: 'Status', value: 'status' },
+      { label: 'Status', value: 'project_status' },
       { label: 'Created At', value: 'createdAt' },
     ],
     NonTechnicalActivity: [
@@ -462,7 +383,7 @@ const FacultyDashboard = () => {
       { label: 'Organized By', value: 'organized_by' },
       { label: 'Date', value: 'date' },
     ],
-    Patents: [
+    Patent: [
       { label: 'Patent Name', value: 'patent_name' },
       { label: 'Application No', value: 'application_no' },
       { label: 'Application Date', value: 'application_date' },
@@ -470,7 +391,7 @@ const FacultyDashboard = () => {
       { label: 'Inventor Name', value: 'inventor_name' },
       { label: 'Description', value: 'description' },
       { label: 'Co-Inventors', value: 'co_inventors' },
-      { label: 'Status', value: 'status' },
+      { label: 'Status', value: 'patent_status' },
       { label: 'Date', value: 'date' },
     ],
     Featured: [
@@ -483,7 +404,7 @@ const FacultyDashboard = () => {
   };
 
   return (
-    <div className= {`min-h-screen pb-5 ${user.role == 'faculty' ? 'bg-gradient-to-br bg-[#f9f6f1]' : ''}`}>
+    <div className={`min-h-screen pb-5 ${user.role == 'faculty' ? 'bg-gradient-to-br bg-[#f9f6f1]' : ''}`}>
       
         {/* Top Navbar */}
         { user.role == 'faculty' && (
@@ -534,7 +455,7 @@ const FacultyDashboard = () => {
         </nav>
         )}
       
-      <div className={`max-w-7xl mx-auto ${user.role == 'faculty' ? 'pt-16 p-4 sm:p-6 lg:p-8' : ''}`}>
+      <div className={`max-w-7xl mx-auto ${user.role == 'faculty' ? 'mt-16 p-4 sm:p-6 lg:p-8' : ''}`}>
         {/* Filter Panel */}
         <FilterPanel
           filters={filters}
@@ -575,7 +496,7 @@ const FacultyDashboard = () => {
               onClick={handleExport}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Download all filtered data as CSV or Excel"
-              disabled={loading || exporting} // Disable while loading or exporting
+              disabled={loading || exporting}
             >
               {exporting ? (
                 <>
@@ -795,12 +716,11 @@ const FacultyDashboard = () => {
                     <div key={index}>
                       <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">{field.label}</p>
                       <p className="text-slate-800 mt-1">
-                        {/* Render date fields with toLocaleDateString, others directly */}
                         {['start_date', 'end_date', 'date', 'date_of_publication', 'application_date', 'createdAt', 'updatedAt'].includes(field.value)
                           ? selectedActivity[field.value]
                             ? new Date(selectedActivity[field.value]).toLocaleDateString()
                             : '-'
-                          : Array.isArray(selectedActivity[field.value]) // Handle arrays (e.g., co_inventors)
+                          : Array.isArray(selectedActivity[field.value])
                             ? selectedActivity[field.value].join(', ') || '-'
                             : selectedActivity[field.value] || '-'}
                       </p>

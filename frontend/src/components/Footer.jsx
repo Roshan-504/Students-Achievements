@@ -1,6 +1,7 @@
 import React from 'react';
 import { MapPin, ExternalLink } from 'lucide-react';
 import TeamSection from '../components/TeamSection';
+import { NavLink } from 'react-router-dom';
 const Footer = () => {
   return (
     <footer className="bg-gray-900 text-white py-4 px-4 sm:px-6 lg:px-8">
@@ -31,13 +32,13 @@ const Footer = () => {
             </h3>
             <ul className="list-none space-y-2 text-sm">
               <li>
-                <a
-                  href="#"
+                <NavLink
+                  to="/know-the-team"
                   className="text-gray-300 hover:text-white hover:underline transition-all duration-200 flex items-center group"
                 >
                   <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 group-hover:bg-white transition-colors duration-200"></span>
                   Know the Team
-                </a>
+                </NavLink>
               </li>
             </ul>
           </div>
@@ -57,9 +58,9 @@ const Footer = () => {
               <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
                 Terms of Service
               </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors duration-200">
+              <NavLink to="/student/contact-us" className="text-gray-400 hover:text-white transition-colors duration-200">
                 Contact Us
-              </a>
+              </NavLink>
             </div>
           </div>
         </div>

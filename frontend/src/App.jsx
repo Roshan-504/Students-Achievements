@@ -25,6 +25,7 @@ import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import BatchManagementPage from './pages/Batch';
 import PatentPage from './pages/Activities/PatentPage';
+import TeamSection from './components/TeamSection';
 
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<h1> Unauthorized</h1>} />
         <Route path="/auth/redirect" element={<AuthRedirect />} />
+        <Route path="/know-the-team" element={<TeamSection />} />
         
         <Route path="/student" element={<ProtectedRoute roles={['student']}><StudentDashboard /></ProtectedRoute>}>
           <Route index element={<><StudentContent /><CardContainer /></>} />

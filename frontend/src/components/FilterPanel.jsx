@@ -19,26 +19,25 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
     'TechnicalActivity',
     'Volunteering',
     'Workshop',
-    'Patents', // Added Patents
-    'Featured', // Added Featured
+    'Patent', // Fixed - removed 's'
+    'Featured',
   ];
 
   const departments = ['INFT', 'CMPN', 'AIDS', 'EXTC', 'AURO', 'ECS'];
 
-  // Handles changes to filter inputs and updates the filters state
   const handleFilterChange = (e, section) => {
     const { name, value, type, checked } = e.target;
     if (section === 'students' && name === 'department') {
-      // Special handling for multi-select department checkboxes
+      // Handle multi-select for department checkboxes
       const updatedDepartments = filters.students.department.includes(value)
-        ? filters.students.department.filter((dep) => dep !== value) // Remove if already selected
-        : [...filters.students.department, value]; // Add if not selected
+        ? filters.students.department.filter((dep) => dep !== value)
+        : [...filters.students.department, value];
       setFilters((prev) => ({
         ...prev,
         students: { ...prev.students, department: updatedDepartments },
       }));
     } else if (section === 'students' && name === 'email') {
-      // Validate email format for student email filter
+      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       setEmailError(emailRegex.test(value) || value === '' ? '' : 'Invalid email format');
       setFilters((prev) => ({
@@ -46,7 +45,7 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
         students: { ...prev.students, email: value },
       }));
     } else {
-      // General handling for other filter types (text, number, select, radio)
+      // Handle other filter changes (text inputs, selects, radio buttons)
       setFilters((prev) => ({
         ...prev,
         [section]: { ...prev[section], [name]: type === 'checkbox' ? checked : value },
@@ -101,16 +100,16 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
             </div>
           </div>
           <div>
-            <label htmlFor="class_division" className="block text-sm font-medium text-gray-700 mb-1">
-              Class Division
+            <label htmlFor="division" className="block text-sm font-medium text-gray-700 mb-1">
+              Division
             </label>
             <select
-              id="class_division"
-              name="class_division"
-              value={filters.students.class_division}
+              id="division"
+              name="division"
+              value={filters.students.division}
               onChange={(e) => handleFilterChange(e, 'students')}
               className="p-2 border rounded-lg w-full focus:ring-2 focus:ring-blue-500"
-              aria-label="Class Division"
+              aria-label="Division"
             >
               <option value="">All Divisions</option>
               <option value="A">A</option>
@@ -174,6 +173,21 @@ const FilterPanel = ({ filters, setFilters, applyFilters, resetFilters }) => {
                 {emailError}
               </p>
             )}
+          </div>
+          <div>
+            <label htmlFor="prn" className="block text-sm font-medium text-gray-700 mb-1">
+              PRN
+            </label>
+            <input
+              id="prn"
+              name="prn"
+              type="text"
+              value={filters.students.prn}
+              onChange={(e) => handleFilterChange(e, 'students')}
+              placeholder="e.g., 1234567890"
+              className="p-2 border rounded-lg w-full focus:ring-2 focus:ring-blue-500"
+              aria-label="PRN"
+            />
           </div>
         </div>
       </div>
