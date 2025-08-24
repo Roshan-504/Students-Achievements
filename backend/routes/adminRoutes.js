@@ -15,7 +15,7 @@ router.post('/upload/faculty', authenticate, authorizeRoles('admin'), uploadXcel
 router.get('/batches', authenticate, authorizeRoles('admin'), getBatches);
 
 // get students in batch
-router.get('/batch-students', getBatchStudents);
+router.get('/batch-students', authenticate, authorizeRoles('admin'), getBatchStudents);
 
 // get faculty count
 router.get('/faculty/count', authenticate, authorizeRoles('admin'), getFacultyCount);
