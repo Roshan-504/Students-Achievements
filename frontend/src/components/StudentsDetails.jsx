@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Edit2, X, ChevronLeft, Search, Trash2, Download, User, Mail, Calendar, FileText } from 'lucide-react';
+import { Edit2, X, ChevronLeft, Search, Trash2, Download, User, Mail, Calendar, FileText, Loader2 } from 'lucide-react';
 import axiosInstance from '../services/axiosInstance';
 import toast from 'react-hot-toast';
 
@@ -249,7 +249,7 @@ const UserDetails = ({ batch, comparisonDate, onClose }) => {
       {/* Loading State */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center p-8">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-4"></div>
+            <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
           <p className="text-slate-600">Loading students...</p>
         </div>
       ) : (

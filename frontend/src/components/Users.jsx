@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Filter, ChevronRight, Users as UsersIcon, X, Plus } from 'lucide-react';
+import { Filter, ChevronRight, Users as UsersIcon, X, Plus, Loader2 } from 'lucide-react';
 import UserDetails from './StudentsDetails';
 import BulkUpload from '../components/BulkUpload';
 import axiosInstance from '../services/axiosInstance';
@@ -262,7 +262,7 @@ const Users = () => {
 
       {loading && (
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+            <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
         </div>
       )}
 

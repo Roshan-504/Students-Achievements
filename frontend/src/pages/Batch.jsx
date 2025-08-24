@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Calendar, Plus, X, FileText, Trash2, Edit2, ChevronRight } from 'lucide-react';
+import { Calendar, Plus, X, FileText, Trash2, Edit2, ChevronRight, Loader2 } from 'lucide-react';
 import axiosInstance from '../services/axiosInstance';
 import UserDetails from '../components/StudentsDetails';
 import BulkUploadModal from '../components/BulkUpload';
@@ -140,7 +140,7 @@ const BatchManagementPage = () => {
 
         {isLoading && !batches.length ? (
           <div className="flex justify-center items-center py-12">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-600"></div>
+            <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
           </div>
         ) : (
           <>

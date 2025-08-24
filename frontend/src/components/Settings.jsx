@@ -11,7 +11,8 @@ import {
   ChevronRight,
   Mail,
   User,
-  Calendar
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import '../App.css';
 import axiosInstance from '../services/axiosInstance';
@@ -344,8 +345,8 @@ const Settings = () => {
       </div>
 
       {isLoaded && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="flex justify-center items-center h-screen">
+            <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
         </div>
       )}
 

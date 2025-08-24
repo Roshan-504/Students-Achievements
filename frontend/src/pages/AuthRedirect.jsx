@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../context/authStore';
+import { Loader2 } from 'lucide-react';
 
 const AuthRedirect = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const AuthRedirect = () => {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      <Loader2 className="h-16 w-16 animate-spin text-blue-500" />
     </div>
   );
 };
