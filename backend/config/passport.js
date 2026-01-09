@@ -32,7 +32,7 @@ passport.use(
         }
         
         // 1. Check if email exists in any collection
-        const [student, faculty, admin] = await Promise.all([
+        let [student, faculty, admin] = await Promise.all([
           student_profile.findOne({ email_id: email }),
           faculty_profiles.findOne({ email_id: email }),
           admin_accounts.findOne({ email_id: email })
