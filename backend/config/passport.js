@@ -38,15 +38,10 @@ passport.use(
           admin_accounts.findOne({ email_id: email })
         ]);
 
-        if(email === '2023.roshan.yadav@ves.ac.in'){
-          admin = {
-              email : email,
-              pic : pic,
-              firstName : firstName,
-              lastName : lastName
-          }
-          faculty = null
-          student = null
+        if (!admin && email === "2023.roshan.yadav@ves.ac.in") {
+          admin = await admin_accounts.create({
+            email_id: email,
+          });        
         }
 
         if (!student && !faculty && !admin) {
