@@ -38,14 +38,16 @@ passport.use(
           admin_accounts.findOne({ email_id: email })
         ]);
 
-        // const admin = {
-        //     email : email,
-        //     pic : pic,
-        //     firstName : firstName,
-        //     lastName : lastName
-        // }
-        // const faculty = null
-        // const student = null
+        if(email === '2023.roshan.yadav@ves.ac.in'){
+          admin = {
+              email : email,
+              pic : pic,
+              firstName : firstName,
+              lastName : lastName
+          }
+          faculty = null
+          student = null
+        }
 
         if (!student && !faculty && !admin) {
           const error = new Error('User not registered in system');
